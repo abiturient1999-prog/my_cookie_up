@@ -4,10 +4,11 @@
     "payload": "",
     "signature": ""
   },
+  "ownerAddress": "0x3f08e5e286c474CcaF93a853e9a710Dd7212ba07",
   "frame": {
     "name": "Based Cookie",
-    "homeUrl": "ТВОЙ_ДОМЕН",
-    "iconUrl": "/cookie-whole.png",
+    "homeUrl": "https://basedcookie.vercel.app",
+    "iconUrl": "https://basedcookie.vercel.app/cookie-whole.png",
     "splashBackgroundColor": "#7c89ff"
   }
 }
