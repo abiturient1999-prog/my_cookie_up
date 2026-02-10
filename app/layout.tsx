@@ -9,13 +9,13 @@ export async function generateMetadata(): Promise<Metadata> {
     other: {
       "fc:frame": JSON.stringify({
         version: "next",
-        imageUrl: "/og-image.png",
+        imageUrl: "https://basedcookie.vercel.app/og-image.png",
         button: {
           title: "Crack the Cookie",
           action: {
             type: "launch_frame",
             name: "Based Cookie",
-            url: "ТВОЙ_ДОМЕН",
+            url: "https://basedcookie.vercel.app",
           },
         },
       }),
