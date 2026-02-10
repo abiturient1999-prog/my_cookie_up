@@ -1,7 +1,4 @@
-const ROOT_URL =
-  process.env.NEXT_PUBLIC_URL ||
-  (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
-  "http://localhost:3000";
+const ROOT_URL = "https://basedcookie.vercel.app";
 
 /**
  * MiniApp configuration object. Must follow the mini app manifest specification.
@@ -15,25 +12,25 @@ export const minikitConfig = {
     signature: "",
   },
   baseBuilder: {
-    ownerAddress: "",
+    ownerAddress: "0x3f08e5e286c474CcaF93a853e9a710Dd7212ba07",
   },
   miniapp: {
     version: "1",
-    name: "my-cookie-up",
+    name: "Based Cookie",
     subtitle: "",
     description: "",
     screenshotUrls: [],
-    iconUrl: `${ROOT_URL}/icon.png`,
-    splashImageUrl: `${ROOT_URL}/splash.png`,
+    iconUrl: ROOT_URL,
+    splashImageUrl: ROOT_URL,
     splashBackgroundColor: "#000000",
     homeUrl: ROOT_URL,
-    webhookUrl: `${ROOT_URL}/api/webhook`,
+    webhookUrl: ROOT_URL,
     primaryCategory: "utility",
     tags: ["example"],
-    heroImageUrl: `${ROOT_URL}/hero.png`,
+    heroImageUrl: ROOT_URL,
     tagline: "",
     ogTitle: "",
     ogDescription: "",
-    ogImageUrl: `${ROOT_URL}/hero.png`,
+    ogImageUrl: ROOT_URL,
   },
 } as const;

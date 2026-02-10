@@ -8,7 +8,7 @@
   "frame": {
     "name": "Based Cookie",
     "homeUrl": "https://basedcookie.vercel.app",
-    "iconUrl": "https://basedcookie.vercel.app/cookie-whole.png",
+    "iconUrl": "https://basedcookie.vercel.app",
     "splashBackgroundColor": "#7c89ff"
   }
 }
