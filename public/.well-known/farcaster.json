@@ -1,0 +1,13 @@
+﻿{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "frame": {
+    "name": "Based Cookie",
+    "homeUrl": "ТВОЙ_ДОМЕН",
+    "iconUrl": "/cookie-whole.png",
+    "splashBackgroundColor": "#7c89ff"
+  }
+}
