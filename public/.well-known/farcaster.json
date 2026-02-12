@@ -1,14 +1,38 @@
 ﻿{
   "accountAssociation": {
-    "header": "",
-    "payload": "",
-    "signature": ""
+    "header": "eyJmaWQiOjI3Njk4NzgsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhDNkJjMzAyYzUxYkE2RWI5QkIxYWY2MDE2RjgzMGI3MDI5RTQ4OGM2In0",
+    "payload": "eyJkb21haW4iOiJiYXNlZGNvb2tpZS52ZXJjZWwuYXBwIn0",
+    "signature": "7Dx6ASXsqL0JJbHwLMk4xcozmms4/6Ln6TrNEhaJAZQKr3QRF4Fo5ZWaq9dMylhESRr3A7fcj+BZHe5ZhiueNhw="
   },
-  "ownerAddress": "0x3f08e5e286c474CcaF93a853e9a710Dd7212ba07",
   "frame": {
+    "version": "1",
     "name": "Based Cookie",
+    "iconUrl": "https://basedcookie.vercel.app/icon.png",
     "homeUrl": "https://basedcookie.vercel.app",
-    "iconUrl": "https://basedcookie.vercel.app",
-    "splashBackgroundColor": "#7c89ff"
+    "imageUrl": "https://basedcookie.vercel.app/og-image.png",
+    "buttonTitle": "Crack the Cookie",
+    "splashImageUrl": "https://basedcookie.vercel.app/splash.png",
+    "splashBackgroundColor": "#0052FF",
+    "webhookUrl": "https://basedcookie.vercel.app/api/webhook",
+    "description": "Based Cookie is an interactive Mini App on Farcaster (Frame v2). Crack open digital fortune cookies, share wisdom in your feed, and engage with the community on the Base network.",
+    "subtitle": "Crack the fortune, share the vibe.",
+    "primaryCategory": "entertainment",
+    "tags": [
+      "farcaster",
+      "frame",
+      "based",
+      "cookie",
+      "base"
+    ],
+    "tagline": "click to reveal your destiny",
+    "ogTitle": "Based Cookie: My prediction",
+    "ogDescription": "I just broke the cookie in Based Cookie! Find out what's waiting for you.",
+    "ogImageUrl": "https://basedcookie.vercel.app/og-image.png",
+    "castShareUrl": "https://warpcast.com/~/compose?text=I%20just%20broke%20my%20cookie%20at%20@basedcookie!%20Find%20your%20destiny%20here:&embeds[]=https://basedcookie.vercel.app",
+    "screenshotUrls": [
+      "https://basedcookie.vercel.app/screenshot1.png",
+      "https://basedcookie.vercel.app/screenshot2.png"
+    ],
+    "heroImageUrl": "https://basedcookie.vercel.app/hero.png"
   }
 }
