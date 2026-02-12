@@ -4,13 +4,11 @@
     "payload": "eyJkb21haW4iOiJiYXNlZGNvb2tpZS52ZXJjZWwuYXBwIn0",
     "signature": "7Dx6ASXsqL0JJbHwLMk4xcozmms4/6Ln6TrNEhaJAZQKr3QRF4Fo5ZWaq9dMylhESRr3A7fcj+BZHe5ZhiueNhw="
   },
-  "frame": {
+  "miniapp": {
     "version": "1",
     "name": "Based Cookie",
     "iconUrl": "https://basedcookie.vercel.app/icon.png",
     "homeUrl": "https://basedcookie.vercel.app",
-    "imageUrl": "https://basedcookie.vercel.app/og-image.png",
-    "buttonTitle": "Crack the Cookie",
     "splashImageUrl": "https://basedcookie.vercel.app/splash.png",
     "splashBackgroundColor": "#0052FF",
     "webhookUrl": "https://basedcookie.vercel.app/api/webhook",
