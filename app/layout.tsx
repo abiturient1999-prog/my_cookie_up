@@ -7,9 +7,9 @@ import "./globals.css";
 export async function generateMetadata(): Promise<Metadata> {
   return {
     other: {
-      "fc:frame": JSON.stringify({
-        version: "next",
-        imageUrl: "https://basedcookie.vercel.app/og-image.png",
+      "fc:miniapp": JSON.stringify({
+        version: "1",
+        imageUrl: "https://basedcookie.vercel.app/embed.jpg",
         button: {
           title: "Crack the Cookie",
           action: {
