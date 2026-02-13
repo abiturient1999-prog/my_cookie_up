@@ -1,11 +1,9 @@
 ﻿{
-  "frame": {
+  "miniapp": {
     "name": "Based Cookie",
     "version": "1",
     "iconUrl": "https://basedcookie.vercel.app/icon.png",
     "homeUrl": "https://basedcookie.vercel.app",
-    "imageUrl": "https://basedcookie.vercel.app/image.png",
-    "buttonTitle": "Crack the Cookie",
     "splashImageUrl": "https://basedcookie.vercel.app/splash.png",
     "splashBackgroundColor": "#0052FF",
     "webhookUrl": "https://basedcookie.vercel.app/api/webhook",
@@ -26,8 +24,7 @@
     "tagline": "click to reveal your destiny",
     "ogTitle": "Based Cookie: My prediction",
     "ogDescription": "I just broke the cookie in Based Cookie! Find out what's waiting for you.",
-    "ogImageUrl": "https://basedcookie.vercel.app/og-image.png",
-    "castShareUrl": "https://warpcast.com/~/compose?text=I%20just%20broke%20my%20cookie%20at%20@basedcookie!%20Find%20your%20destiny%20here:&embeds[]=https://basedcookie.vercel.app"
+    "ogImageUrl": "https://basedcookie.vercel.app/og-image.png"
   },
   "accountAssociation": {
     "header": "eyJmaWQiOjI3Njk4NzgsInR5cGUiOiJhdXRoIiwia2V5IjoiMHg3ZGRDMmFDMTA1NzYwM0E0ODRlQ2JFM0VlM0FBRDZCYzNFMDkwQ2U3In0",
