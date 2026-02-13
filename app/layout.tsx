@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
     other: {
       "fc:miniapp": JSON.stringify({
         version: "1",
-        imageUrl: "https://basedcookie.vercel.app/embed.jpg",
+        imageUrl: "https://basedcookie.vercel.app/embed.png",
         button: {
           title: "Crack the Cookie",
           action: {
