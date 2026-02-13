@@ -37,3 +37,15 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 To learn more about OnchainKit, see our [documentation](https://docs.base.org/onchainkit).
 
 To learn more about Next.js, see the [Next.js documentation](https://nextjs.org/docs).
+
+## Environment Variables
+
+Create a `.env.local` with the values below for transaction support:
+
+```bash
+NEXT_PUBLIC_ONCHAINKIT_API_KEY=
+NEXT_PUBLIC_COOKIEJAR_ADDRESS=0x...
+NEXT_PUBLIC_PAYMASTER_URL=https://...
+```
+
+`NEXT_PUBLIC_PAYMASTER_URL` is required for sponsored transactions (`isSponsored`) and must start with `http://` or `https://`.

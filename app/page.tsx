@@ -38,6 +38,8 @@ export default function Home() {
   const [fortune, setFortune] = useState("");
 
   const contractAddress = process.env.NEXT_PUBLIC_COOKIEJAR_ADDRESS as `0x${string}`;
+  const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL?.trim();
+  const hasPaymaster = Boolean(paymasterUrl && /^https?:\/\//.test(paymasterUrl));
 
   useEffect(() => {
     sdk.actions.ready();
@@ -113,7 +115,8 @@ export default function Home() {
             <Transaction
               chainId={84532}
               calls={[{ to: contractAddress, abi: contractAbi, functionName: 'claim' }]}
-              isSponsored // РЎРїРѕРЅСЃРёСЂРѕРІР°РЅРёРµ РіР°Р·Р° РІРєР»СЋС‡РµРЅРѕ
+              isSponsored={hasPaymaster}
+              paymaster={hasPaymaster ? paymasterUrl : undefined}
             >
               <TransactionButton className="w-full bg-black text-white border-4 border-white h-16 rounded-none font-black text-xl hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1" text="CLAIM YOUR $ NOW" />
               <TransactionStatus>
