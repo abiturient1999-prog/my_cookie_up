@@ -25,7 +25,7 @@
     "ogTitle": "Based Cookie: My prediction",
     "ogDescription": "I just broke the cookie in Based Cookie! Find out what's waiting for you.",
     "ogImageUrl": "https://basedcookie.vercel.app/og-image.png",
-    "noindex": true
+    "noindex": false
   },
   "accountAssociation": {
     "header": "eyJmaWQiOjI3Njk4NzgsInR5cGUiOiJhdXRoIiwia2V5IjoiMHg3ZGRDMmFDMTA1NzYwM0E0ODRlQ2JFM0VlM0FBRDZCYzNFMDkwQ2U3In0",
