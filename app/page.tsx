@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { motion, AnimatePresence } from 'framer-motion'; // Р”Р»СЏ РєСЂСѓС‚С‹С… Р°РЅРёРјР°С†РёР№
 import { sdk } from '@farcaster/miniapp-sdk';
+import { encodeFunctionData } from 'viem';
 import { 
   Transaction, 
   TransactionButton, 
@@ -37,12 +38,16 @@ export default function Home() {
   const [isCracked, setIsCracked] = useState(false);
   const [fortune, setFortune] = useState("");
   const hasPaymaster = Boolean(getClientPaymasterUrl());
+  const claimRewardData = encodeFunctionData({
+    abi: CONTRACT_ABI,
+    functionName: 'claimReward',
+    args: [],
+  });
   const calls = [
     {
-      address: CONTRACT_ADDRESS,
-      abi: CONTRACT_ABI,
-      functionName: 'claimReward' as const,
-      args: [],
+      to: CONTRACT_ADDRESS,
+      data: claimRewardData,
+      value: BigInt(0),
     },
   ];
 

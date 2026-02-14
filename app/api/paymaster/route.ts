@@ -32,11 +32,7 @@ function isAllowedRequest(payload: unknown): boolean {
 }
 
 function getPaymasterEndpoint(): string | null {
-  const endpoint =
-    process.env.CDP_PAYMASTER_URL?.trim() ||
-    // Backward compatibility for existing local setup.
-    process.env.NEXT_PUBLIC_PAYMASTER_URL?.trim() ||
-    null;
+  const endpoint = process.env.CDP_PAYMASTER_URL?.trim() || null;
 
   if (!endpoint || !/^https?:\/\//i.test(endpoint)) {
     return null;
