@@ -11,9 +11,7 @@ import {
   TransactionStatusAction 
 } from '@coinbase/onchainkit/transaction';
 import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
-
-const contractAbi = [{ type: 'function', name: 'claim', inputs: [], outputs: [], stateMutability: 'nonpayable' }] as const;
-const COOKIEJAR_ADDRESS = "0x22DAEE6E7dA99e7bA29F3e53C7789feb2f899b77" as const;
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from './contract';
 
 const FORTUNES = [
   "EVERYTHING IS BASED ON @BASE PUMP \u{1F680}",
@@ -37,10 +35,9 @@ export default function Home() {
   const { address } = useAccount();
   const [isCracked, setIsCracked] = useState(false);
   const [fortune, setFortune] = useState("");
-
-  const contractAddress = COOKIEJAR_ADDRESS;
   const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL?.trim();
   const hasPaymaster = Boolean(paymasterUrl && /^https?:\/\//.test(paymasterUrl));
+  const calls = [{ to: CONTRACT_ADDRESS, abi: CONTRACT_ABI, functionName: 'claimReward', args: [] }];
 
   useEffect(() => {
     sdk.actions.ready();
@@ -115,7 +112,7 @@ export default function Home() {
           {address ? (
             <Transaction
               chainId={84532}
-              calls={[{ to: contractAddress, abi: contractAbi, functionName: 'claim' }]}
+              calls={calls}
               isSponsored={hasPaymaster}
             >
               <TransactionButton className="w-full bg-black text-white border-4 border-white h-16 rounded-none font-black text-xl hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1" text="CLAIM YOUR $ NOW" />
