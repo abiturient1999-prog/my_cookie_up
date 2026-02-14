@@ -13,6 +13,7 @@ import {
 import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
 
 const contractAbi = [{ type: 'function', name: 'claim', inputs: [], outputs: [], stateMutability: 'nonpayable' }] as const;
+const COOKIEJAR_ADDRESS = "0x22DAEE6E7dA99e7bA29F3e53C7789feb2f899b77" as const;
 
 const FORTUNES = [
   "EVERYTHING IS BASED ON @BASE PUMP \u{1F680}",
@@ -37,7 +38,7 @@ export default function Home() {
   const [isCracked, setIsCracked] = useState(false);
   const [fortune, setFortune] = useState("");
 
-  const contractAddress = process.env.NEXT_PUBLIC_COOKIEJAR_ADDRESS as `0x${string}`;
+  const contractAddress = COOKIEJAR_ADDRESS;
   const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL?.trim();
   const hasPaymaster = Boolean(paymasterUrl && /^https?:\/\//.test(paymasterUrl));
 
