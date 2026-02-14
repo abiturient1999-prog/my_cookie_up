@@ -37,7 +37,7 @@ export default function Home() {
   const [fortune, setFortune] = useState("");
   const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL?.trim();
   const hasPaymaster = Boolean(paymasterUrl && /^https?:\/\//.test(paymasterUrl));
-  const calls = [{ to: CONTRACT_ADDRESS, abi: CONTRACT_ABI, functionName: 'claimReward', args: [] }];
+  const calls = [{ to: CONTRACT_ADDRESS as `0x${string}`, abi: CONTRACT_ABI, functionName: 'claimReward', args: [] }];
 
   useEffect(() => {
     sdk.actions.ready();
