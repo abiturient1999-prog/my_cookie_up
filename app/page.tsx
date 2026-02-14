@@ -12,6 +12,7 @@ import {
 } from '@coinbase/onchainkit/transaction';
 import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from './contract';
+import { getClientPaymasterUrl } from './paymaster';
 
 const FORTUNES = [
   "EVERYTHING IS BASED ON @BASE PUMP \u{1F680}",
@@ -35,9 +36,15 @@ export default function Home() {
   const { address } = useAccount();
   const [isCracked, setIsCracked] = useState(false);
   const [fortune, setFortune] = useState("");
-  const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL?.trim();
-  const hasPaymaster = Boolean(paymasterUrl && /^https?:\/\//.test(paymasterUrl));
-  const calls = [{ to: CONTRACT_ADDRESS as `0x${string}`, abi: CONTRACT_ABI, functionName: 'claimReward', args: [] }];
+  const hasPaymaster = Boolean(getClientPaymasterUrl());
+  const calls = [
+    {
+      address: CONTRACT_ADDRESS,
+      abi: CONTRACT_ABI,
+      functionName: 'claimReward' as const,
+      args: [],
+    },
+  ];
 
   useEffect(() => {
     sdk.actions.ready();

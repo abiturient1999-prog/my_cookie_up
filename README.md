@@ -45,7 +45,10 @@ Create a `.env.local` with the values below for transaction support:
 ```bash
 NEXT_PUBLIC_ONCHAINKIT_API_KEY=
 NEXT_PUBLIC_COOKIEJAR_ADDRESS=0x...
-NEXT_PUBLIC_PAYMASTER_URL=https://...
+CDP_PAYMASTER_URL=https://api.developer.coinbase.com/rpc/v1/base-sepolia/<your-client-api-key>
+NEXT_PUBLIC_PAYMASTER_PROXY_SERVER_URL=/api/paymaster
 ```
 
-`NEXT_PUBLIC_PAYMASTER_URL` is required for sponsored transactions (`isSponsored`) and must start with `http://` or `https://`.
+`CDP_PAYMASTER_URL` must stay server-side (do not expose it in `NEXT_PUBLIC_*` variables).
+
+`NEXT_PUBLIC_PAYMASTER_PROXY_SERVER_URL` is optional. By default, the app uses `/api/paymaster`.

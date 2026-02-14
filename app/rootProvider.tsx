@@ -3,10 +3,10 @@ import { ReactNode } from "react";
 import { baseSepolia } from "wagmi/chains";
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import "@coinbase/onchainkit/styles.css";
+import { getClientPaymasterUrl } from "./paymaster";
 
 export function RootProvider({ children }: { children: ReactNode }) {
-  const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL?.trim();
-  const hasPaymaster = Boolean(paymasterUrl && /^https?:\/\//.test(paymasterUrl));
+  const paymasterUrl = getClientPaymasterUrl();
 
   return (
     <OnchainKitProvider
@@ -16,7 +16,7 @@ export function RootProvider({ children }: { children: ReactNode }) {
         appearance: {
           mode: "auto",
         },
-        paymaster: hasPaymaster ? paymasterUrl : null,
+        paymaster: paymasterUrl,
         wallet: {
           display: "modal",
           preference: "all",
