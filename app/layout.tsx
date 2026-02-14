@@ -4,19 +4,26 @@ import { SafeArea } from "@coinbase/onchainkit/minikit";
 import { RootProvider } from "./rootProvider";
 import "./globals.css";
 
+function getAppUrl() {
+  const rawUrl = process.env.NEXT_PUBLIC_URL?.trim() || "https://basedcookie.vercel.app";
+  return rawUrl.endsWith("/") ? rawUrl.slice(0, -1) : rawUrl;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
+  const appUrl = getAppUrl();
+
   return {
     other: {
       "base:app_id": "697a5a842dbd4b464042ae9a",
       "fc:miniapp": JSON.stringify({
         version: "1",
-        imageUrl: "https://basedcookie.vercel.app/embed.png",
+        imageUrl: `${appUrl}/embed.png`,
         button: {
           title: "Crack the Cookie",
           action: {
             type: "launch_frame",
             name: "Based Cookie",
-            url: "https://basedcookie.vercel.app",
+            url: appUrl,
           },
         },
       }),
