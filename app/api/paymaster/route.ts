@@ -117,10 +117,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (process.env.PAYMASTER_PROXY_DEBUG === "1") {
-    const callDataList = getUserOperationCallData(payload);
-    for (const callData of callDataList) {
-      const parsed = parseExecuteTarget(callData);
+  const debugEnabled = process.env.PAYMASTER_PROXY_DEBUG === "1";
+  const debugParsedCalls = debugEnabled
+    ? getUserOperationCallData(payload).map(parseExecuteTarget)
+    : [];
+
+  if (debugEnabled) {
+    for (const parsed of debugParsedCalls) {
       console.log("[paymaster-proxy] selector:", parsed.selector);
       console.log("[paymaster-proxy] target:", parsed.target);
       console.log("[paymaster-proxy] value:", parsed.value);
@@ -146,11 +149,20 @@ export async function POST(request: NextRequest) {
 
   const responseText = await upstreamResponse.text();
 
+  const responseHeaders = new Headers({
+    "content-type":
+      upstreamResponse.headers.get("content-type") || JSON_CONTENT_TYPE,
+  });
+
+  if (debugEnabled && debugParsedCalls.length > 0) {
+    const first = debugParsedCalls[0];
+    responseHeaders.set("x-paymaster-debug-selector", first.selector);
+    responseHeaders.set("x-paymaster-debug-target", first.target ?? "null");
+    responseHeaders.set("x-paymaster-debug-value", first.value ?? "null");
+  }
+
   return new NextResponse(responseText, {
     status: upstreamResponse.status,
-    headers: {
-      "content-type":
-        upstreamResponse.headers.get("content-type") || JSON_CONTENT_TYPE,
-    },
+    headers: responseHeaders,
   });
 }
