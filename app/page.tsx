@@ -33,7 +33,7 @@ export default function Home() {
   };
 
   const calls = [{
-    to: CONTRACT_ADDRESS,
+    to: CONTRACT_ADDRESS as `0x${string}`,
     abi: CONTRACT_ABI,
     functionName: "claimReward",
     args: [],
@@ -53,7 +53,7 @@ export default function Home() {
 
       {prediction && (
         <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-md max-w-sm">
-          <p className="italic text-lg">"{prediction}"</p>
+          <p className="italic text-lg">&quot;{prediction}&quot;</p>
         </div>
       )}
 
