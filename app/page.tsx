@@ -116,7 +116,6 @@ export default function Home() {
               chainId={84532}
               calls={[{ to: contractAddress, abi: contractAbi, functionName: 'claim' }]}
               isSponsored={hasPaymaster}
-              paymaster={hasPaymaster ? paymasterUrl : undefined}
             >
               <TransactionButton className="w-full bg-black text-white border-4 border-white h-16 rounded-none font-black text-xl hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1" text="CLAIM YOUR $ NOW" />
               <TransactionStatus>

@@ -5,6 +5,9 @@ import { OnchainKitProvider } from "@coinbase/onchainkit";
 import "@coinbase/onchainkit/styles.css";
 
 export function RootProvider({ children }: { children: ReactNode }) {
+  const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL?.trim();
+  const hasPaymaster = Boolean(paymasterUrl && /^https?:\/\//.test(paymasterUrl));
+
   return (
     <OnchainKitProvider
       apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
@@ -13,6 +16,7 @@ export function RootProvider({ children }: { children: ReactNode }) {
         appearance: {
           mode: "auto",
         },
+        paymaster: hasPaymaster ? paymasterUrl : null,
         wallet: {
           display: "modal",
           preference: "all",
