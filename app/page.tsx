@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { motion, AnimatePresence } from 'framer-motion'; // Р”Р»СЏ РєСЂСѓС‚С‹С… Р°РЅРёРјР°С†РёР№
 import { sdk } from '@farcaster/miniapp-sdk';
@@ -37,7 +37,19 @@ export default function Home() {
   const { address } = useAccount();
   const [isCracked, setIsCracked] = useState(false);
   const [fortune, setFortune] = useState("");
-  const hasPaymaster = Boolean(getClientPaymasterUrl());
+  const paymasterUrl = getClientPaymasterUrl();
+  const hasPaymaster = Boolean(paymasterUrl);
+  const capabilities = useMemo(() => {
+    if (!paymasterUrl) {
+      return undefined;
+    }
+
+    return {
+      paymasterService: {
+        url: paymasterUrl,
+      },
+    };
+  }, [paymasterUrl]);
   const claimRewardData = encodeFunctionData({
     abi: CONTRACT_ABI,
     functionName: 'claimReward',
@@ -126,6 +138,7 @@ export default function Home() {
               chainId={84532}
               calls={calls}
               isSponsored={hasPaymaster}
+              capabilities={capabilities}
             >
               <TransactionButton className="w-full bg-black text-white border-4 border-white h-16 rounded-none font-black text-xl hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1" text="CLAIM YOUR $ NOW" />
               <TransactionStatus>
@@ -158,6 +171,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
