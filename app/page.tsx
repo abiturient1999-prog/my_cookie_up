@@ -1,7 +1,7 @@
 ﻿'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
-import { motion, AnimatePresence } from 'framer-motion'; // Р”Р»СЏ РєСЂСѓС‚С‹С… Р°РЅРёРјР°С†РёР№
+import { motion, AnimatePresence } from 'framer-motion';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { encodeFunctionData } from 'viem';
 import { 
@@ -15,46 +15,50 @@ import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from './contract';
 import { getClientPaymasterUrl } from './paymaster';
 
+// Ссылка на твое приложение (Замени на актуальный домен, если он другой)
+const APP_URL = "https://basedcookie.vercel.app"; 
+
 const FORTUNES = [
-  "EVERYTHING IS BASED ON @BASE PUMP \u{1F680}",
-  "ONCHAIN SUMMER NEVER ENDS \u{2600}\u{FE0F}",
-  "MINT THE COOKIE, HODL THE CRUMB \u{1F36A}",
-  "BASED AND BLUE-PILLED \u{1F535}",
-  "YOUR GAS IS LOW, BUT YOUR VIBE IS HIGH \u{2728}",
-  "EXIT LIQUIDITY? NO, JUST COOKIE LIQUIDITY \u{1F36C}",
-  "BORN ONCHAIN, RAISED BY DEGENS \u{1F476}",
-  "WAGMI: WE ARE ALL GONNA MINT COOKIES \u{1F95B}",
-  "JESSE POLLAK APPROVES THIS MESSAGE \u{1F535}",
-  "0.000001 ETH FOR A CRUMB? BULLISH \u{1F4C8}",
-  "STAY BASED, STAY CRUNCHY \u{1F6E1}\u{FE0F}",
-  "DEGEN LEVEL: MAXIMUM CRUNCH \u{1F479}",
-  "PAPER HANDS CRUMBLE, DIAMOND HANDS CLINK \u{1F48E}",
-  "ONCHAIN IS THE NEW ONLINE \u{1F310}",
-  "GO TO BASE, DON'T LOOK BACK \u{1F535}"
+  "EVERYTHING IS BASED ON @BASE PUMP 🚀",
+  "ONCHAIN SUMMER NEVER ENDS ☀️",
+  "MINT THE COOKIE, HODL THE CRUMB 🍪",
+  "BASED AND BLUE-PILLED 🔵",
+  "YOUR GAS IS LOW, BUT YOUR VIBE IS HIGH ✨",
+  "EXIT LIQUIDITY? NO, JUST COOKIE LIQUIDITY 🍬",
+  "BORN ONCHAIN, RAISED BY DEGENS 👶",
+  "WAGMI: WE ARE ALL GONNA MINT COOKIES 🥠",
+  "JESSE POLLAK APPROVES THIS MESSAGE 🔵",
+  "0.000001 ETH FOR A CRUMB? BULLISH 📈",
+  "STAY BASED, STAY CRUNCHY 🛡️",
+  "DEGEN LEVEL: MAXIMUM CRUNCH 👾",
+  "PAPER HANDS CRUMBLE, DIAMOND HANDS CLINK 💎",
+  "ONCHAIN IS THE NEW ONLINE 🌐",
+  "GO TO BASE, DON'T LOOK BACK 🔵"
 ];
 
 export default function Home() {
   const { address } = useAccount();
   const [isCracked, setIsCracked] = useState(false);
   const [fortune, setFortune] = useState("");
+  
   const paymasterUrl = getClientPaymasterUrl();
   const hasPaymaster = Boolean(paymasterUrl);
-  const capabilities = useMemo(() => {
-    if (!paymasterUrl) {
-      return undefined;
-    }
 
+  const capabilities = useMemo(() => {
+    if (!paymasterUrl) return undefined;
     return {
       paymasterService: {
         url: paymasterUrl,
       },
     };
   }, [paymasterUrl]);
+
   const claimRewardData = encodeFunctionData({
     abi: CONTRACT_ABI,
     functionName: 'claimReward',
     args: [],
   });
+
   const calls = [
     {
       to: CONTRACT_ADDRESS,
@@ -64,110 +68,164 @@ export default function Home() {
   ];
 
   useEffect(() => {
-    sdk.actions.ready();
+    const initSdk = async () => {
+      try {
+        await sdk.actions.ready();
+      } catch (error) {
+        console.error("SDK Init Error:", error);
+      }
+    };
+    initSdk();
   }, []);
 
   const playCrunch = () => {
     const audio = new Audio('/crunch.mp3');
-    audio.play();
+    audio.play().catch(() => {});
   };
 
   const handleCrack = () => {
     if (isCracked) return;
-    playCrunch();
+    playCrunch(); 
     setIsCracked(true);
     setFortune(FORTUNES[Math.floor(Math.random() * FORTUNES.length)]);
   };
 
+  // --- ЛОГИКА SHARE ---
+  const handleShare = useCallback(() => {
+    const text = `I cracked the cookie and got: ${fortune}\n\nMint yours on Base Sepolia! 🍪`;
+    
+    // Формируем ссылку для нативного компоузера
+    // encodeURIComponent важен, чтобы спецсимволы не ломали ссылку
+    const warpcastUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(APP_URL)}`;
+    
+    // Используем SDK для открытия URL. Base App перехватит этот URL и откроет нативный редактор.
+    sdk.actions.openUrl(warpcastUrl);
+  }, [fortune]);
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-t from-[#ff71ce] via-[#b967ff] to-[#05ffa1] text-white p-6 font-mono">
-      {/* Р—Р°РіРѕР»РѕРІРѕРє РІ СЃС‚РёР»Рµ СЂРµС‚СЂРѕ-РєРѕРјРёРєСЃР° */}
+    // h-screen и overflow-hidden предотвращают скролл всей страницы, если контент влезает
+    <div className="flex flex-col items-center justify-between min-h-screen h-screen bg-gradient-to-t from-[#ff71ce] via-[#b967ff] to-[#05ffa1] text-white p-4 font-mono overflow-hidden">
+      
+      {/* 1. ЗАГОЛОВОК (Компактный отступ сверху) */}
       <motion.h1 
-        initial={{ y: -20 }} animate={{ y: 0 }}
-        className="text-4xl font-black mb-12 tracking-tighter border-4 border-black bg-yellow-400 text-black px-4 py-2 rotate-[-2deg] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
-        style={{ textShadow: '0 2px 2px rgba(0, 0, 0, 0.85)' }}
+        initial={{ y: -50, opacity: 0 }} 
+        animate={{ y: 0, opacity: 1 }}
+        className="mt-6 text-3xl font-black tracking-tighter border-4 border-black bg-yellow-400 text-black px-4 py-2 rotate-[-2deg] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-center z-10"
+        style={{ textShadow: '0 1px 0px rgba(255,255,255,0.5)' }}
       >
         BASED COOKIE
       </motion.h1>
 
-      {/* Р—РѕРЅР° РџРµС‡РµРЅСЊСЏ */}
-      <div className="relative flex items-center justify-center h-64">
+      {/* 2. ЦЕНТРАЛЬНАЯ ЗОНА (Печенье + Предсказание) */}
+      {/* flex-grow позволяет занять всё доступное место, но не больше */}
+      <div className="flex-grow flex flex-col items-center justify-center w-full max-w-md relative">
         <AnimatePresence mode="wait">
           {!isCracked ? (
             <motion.img
               key="whole"
               src="/cookie-whole.png"
               alt="Cookie"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleCrack}
-              className="w-48 h-48 cursor-pointer object-contain drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]"
+              // Уменьшен размер для мобилок (w-40 / 160px)
+              className="w-40 h-auto cursor-pointer object-contain drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] z-20"
               exit={{ scale: 0, opacity: 0, rotate: 180 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
             />
           ) : (
             <motion.div 
               key="cracked"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center w-full"
             >
-              <img src="/cookie-cracked.png" alt="Cracked" className="w-56 h-56 object-contain" />
+              {/* Расколотое печенье (тоже компактное) */}
+              <img 
+                src="/cookie-cracked.png" 
+                alt="Cracked" 
+                className="w-36 h-auto object-contain mb-2" 
+              />
               
-              {/* РћР±Р»Р°С‡РєРѕ СЃ РїСЂРµРґСЃРєР°Р·Р°РЅРёРµРј */}
+              {/* ОБЛАЧКО С ПРЕДСКАЗАНИЕМ (С АНИМАЦИЕЙ ПАРЕНИЯ) */}
               <motion.div 
-                animate={{ y: [0, -10, 0], rotate: [-1, 1, -1] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="mt-4 bg-white text-black p-4 rounded-lg border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-[250px] relative"
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ 
+                  opacity: 1, 
+                  y: [0, -8, 0], // Вернул анимацию парения вверх-вниз
+                  rotate: [-1, 1, -1] 
+                }}
+                transition={{ 
+                  opacity: { duration: 0.2 },
+                  y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+                  rotate: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+                }}
+                className="relative bg-white text-black p-3 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-[90%] text-center mt-2"
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[10px] border-b-white"></div>
-                <p className="font-black text-center text-sm uppercase leading-tight">{fortune}</p>
+                {/* Хвостик облачка */}
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[10px] border-b-black"></div>
+                <div className="absolute -top-[10px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white"></div>
+                
+                <p className="font-black text-xs md:text-sm uppercase leading-tight tracking-wide mb-2">
+                  {fortune}
+                </p>
+
+                <button 
+                  onClick={handleShare}
+                  className="w-full bg-blue-600 text-white font-bold py-1.5 rounded-lg text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>Share Fortune</span> 🚀
+                </button>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* РљРЅРѕРїРєР° С‚СЂР°РЅР·Р°РєС†РёРё */}
-      {isCracked && (
-        <motion.div 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-          className="mt-12 w-full max-w-[280px]"
-        >
-          {address ? (
-            <Transaction
-              chainId={84532}
-              calls={calls}
-              isSponsored={hasPaymaster}
-              capabilities={capabilities}
-            >
-              <TransactionButton className="w-full bg-black text-white border-4 border-white h-16 rounded-none font-black text-xl hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1" text="CLAIM YOUR $ NOW" />
-              <TransactionStatus>
-                <TransactionStatusLabel className="text-center mt-2 text-xs" />
-                <TransactionStatusAction />
-              </TransactionStatus>
-            </Transaction>
-          ) : (
-            <Wallet>
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.95, y: 2 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      {/* 3. НИЖНЯЯ ЗОНА (Кнопки + Текст) */}
+      <div className="w-full max-w-[280px] z-30 flex flex-col items-center justify-end pb-8">
+        {isCracked ? (
+          <motion.div 
+            className="w-full"
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ delay: 0.3 }}
+          >
+            {address ? (
+              <Transaction
+                chainId={84532}
+                calls={calls}
+                isSponsored={hasPaymaster}
+                capabilities={capabilities}
               >
-                <ConnectWallet
-                  disconnectedLabel={"CONNECT AND CLAIM \u{1F381}"}
-                  className="!bg-[#7c89ff] !text-white !font-bold !border-none !shadow-[0_6px_0_0_#5a65c0] rounded-xl"
+                <TransactionButton 
+                  className="w-full bg-black text-white border-4 border-white h-12 rounded-xl font-black text-lg hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none" 
+                  text="CLAIM REWARD 💰" 
                 />
-              </motion.div>
-            </Wallet>
-          )}
-        </motion.div>
-      )}
-
-      {!isCracked && (
-        <p className="mt-12 text-blue-200 animate-pulse text-xs uppercase tracking-widest">
-          {"\u{1F36A} CLICK TO REVEAL DESTINY \u{1F36A}"}
-        </p>
-      )}
+                <TransactionStatus>
+                  <TransactionStatusLabel className="text-center mt-2 text-xs font-bold text-white drop-shadow-md" />
+                  <TransactionStatusAction />
+                </TransactionStatus>
+              </Transaction>
+            ) : (
+              <Wallet>
+                <ConnectWallet
+                  disconnectedLabel="CONNECT WALLET 🔌"
+                  className="w-full !bg-[#0052ff] !text-white !font-black !h-12 !rounded-xl !border-2 !border-white shadow-[0_4px_0_0_rgba(0,0,0,0.2)]"
+                />
+              </Wallet>
+            )}
+          </motion.div>
+        ) : (
+          <motion.p 
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-white font-bold text-xs uppercase tracking-[0.2em] drop-shadow-md"
+          >
+            🍪 CLICK TO REVEAL DESTINY 🍪
+          </motion.p>
+        )}
+      </div>
     </div>
   );
 }
