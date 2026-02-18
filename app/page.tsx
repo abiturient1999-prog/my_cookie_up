@@ -83,12 +83,7 @@ export default function Home() {
     const shareText = `I just cracked a Based Cookie and got this fortune: "${fortune}" 🍪✨`;
     const shareUrl = "https://basedcookie.vercel.app";
     const warpcastUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-
-    if (typeof sdk?.actions?.openUrl === 'function') {
-      sdk.actions.openUrl(warpcastUrl);
-    } else {
-      window.open(warpcastUrl, '_blank');
-    }
+    sdk.actions.openUrl(warpcastUrl);
   };
 
   return (
@@ -103,7 +98,7 @@ export default function Home() {
       </motion.h1>
 
       {/* Р—РѕРЅР° РџРµС‡РµРЅСЊСЏ */}
-      <div className="relative flex items-center justify-center h-64">
+      <div className="relative flex items-center justify-center min-h-[420px]">
         <AnimatePresence mode="wait">
           {!isCracked ? (
             <motion.img
@@ -143,7 +138,7 @@ export default function Home() {
       {isCracked && (
         <motion.div 
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-          className="w-full max-w-[90%] sm:max-w-md"
+          className="mt-6 w-full max-w-[90%] sm:max-w-md flex flex-col gap-4"
         >
           {address ? (
             <Transaction
@@ -152,7 +147,7 @@ export default function Home() {
               isSponsored={hasPaymaster}
               capabilities={capabilities}
             >
-              <TransactionButton className="w-full bg-black text-white border-4 border-white h-14 sm:h-20 rounded-none font-black text-lg sm:text-2xl hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1" text="CLAIM YOUR 🍪 NOW" />
+              <TransactionButton className="w-full text-lg sm:text-2xl h-14 sm:h-20 bg-black text-white border-4 border-white font-black hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1" text="CLAIM YOUR 🍪 NOW" />
               <TransactionStatus>
                 <TransactionStatusLabel className="text-center mt-2 text-xs" />
                 <TransactionStatusAction />
@@ -176,7 +171,7 @@ export default function Home() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleShare}
-            className="mt-4 w-full py-2 bg-white text-black border-4 border-black font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-cyan-300 transition-colors"
+            className="w-full text-lg sm:text-2xl h-14 sm:h-20 bg-white text-black border-4 border-black font-black uppercase hover:bg-cyan-300 transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1"
           >
             Share Fortune ↗
           </motion.button>
