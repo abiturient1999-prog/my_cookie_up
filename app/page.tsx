@@ -79,6 +79,18 @@ export default function Home() {
     setFortune(FORTUNES[Math.floor(Math.random() * FORTUNES.length)]);
   };
 
+  const handleShare = () => {
+    const shareText = `I just cracked a Based Cookie and got this fortune: "${fortune}" 🍪✨`;
+    const shareUrl = "https://basedcookie.vercel.app";
+    const warpcastUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+
+    if (typeof sdk?.actions?.openUrl === 'function') {
+      sdk.actions.openUrl(warpcastUrl);
+    } else {
+      window.open(warpcastUrl, '_blank');
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-t from-[#ff71ce] via-[#b967ff] to-[#05ffa1] text-white p-6 font-mono">
       {/* Р—Р°РіРѕР»РѕРІРѕРє РІ СЃС‚РёР»Рµ СЂРµС‚СЂРѕ-РєРѕРјРёРєСЃР° */}
@@ -160,6 +172,14 @@ export default function Home() {
               </motion.div>
             </Wallet>
           )}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleShare}
+            className="mt-4 w-full py-2 bg-white text-black border-4 border-black font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-cyan-300 transition-colors"
+          >
+            Share Fortune ↗
+          </motion.button>
         </motion.div>
       )}
 
