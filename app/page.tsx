@@ -143,7 +143,7 @@ export default function Home() {
       {isCracked && (
         <motion.div 
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-          className="mt-12 w-full max-w-[90%] sm:max-w-md"
+          className="w-full max-w-[90%] sm:max-w-md"
         >
           {address ? (
             <Transaction
@@ -152,7 +152,7 @@ export default function Home() {
               isSponsored={hasPaymaster}
               capabilities={capabilities}
             >
-              <TransactionButton className="w-full bg-black text-white border-4 border-white h-14 sm:h-20 rounded-none font-black text-lg sm:text-2xl hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1" text="CLAIM YOUR 💠 NOW" />
+              <TransactionButton className="w-full bg-black text-white border-4 border-white h-14 sm:h-20 rounded-none font-black text-lg sm:text-2xl hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1" text="CLAIM YOUR 🍪 NOW" />
               <TransactionStatus>
                 <TransactionStatusLabel className="text-center mt-2 text-xs" />
                 <TransactionStatusAction />
