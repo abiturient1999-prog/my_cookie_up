@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type MouseEventHandler } from 'react';
 import { useAccount } from 'wagmi';
 import { motion, AnimatePresence } from 'framer-motion'; // Р”Р»СЏ РєСЂСѓС‚С‹С… Р°РЅРёРјР°С†РёР№
 import { sdk } from '@farcaster/miniapp-sdk';
@@ -164,9 +164,14 @@ export default function Home() {
   };
 
   const closeTxNotice = () => {
-    if (txNotice.phase === 'success' || txNotice.phase === 'error') {
-      setIsTxNoticeOpen(false);
-    }
+    setIsTxNoticeOpen(false);
+    setTxNotice({ phase: 'idle', message: '' });
+  };
+
+  const handleCloseTxNotice: MouseEventHandler<HTMLButtonElement> = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    closeTxNotice();
   };
 
   const txExplorerUrl = txNotice.txHash ? `https://sepolia.basescan.org/tx/${txNotice.txHash}` : null;
@@ -235,7 +240,13 @@ export default function Home() {
               onSuccess={handleTxSuccess}
               onError={handleTxError}
             >
-              <TransactionButton className={CLAIM_BUTTON_CLASS} text="CLAIM YOUR 🍪 NOW" />
+              <TransactionButton
+                className={CLAIM_BUTTON_CLASS}
+                text="CLAIM YOUR 🍪 NOW"
+                pendingOverride={{ text: 'TRANSACTION IN PROGRESS...' }}
+                successOverride={{ text: 'CLAIM COMPLETED ✅', onClick: () => undefined }}
+                errorOverride={{ text: 'TRY CLAIM AGAIN', onClick: () => undefined }}
+              />
             </Transaction>
           ) : (
             <Wallet>
@@ -269,8 +280,12 @@ export default function Home() {
               {(txNotice.phase === 'success' || txNotice.phase === 'error') && (
                 <button
                   type="button"
-                  onClick={closeTxNotice}
-                  className="absolute right-2 top-2 h-8 w-8 rounded-full border-2 border-black bg-white text-black text-lg font-black leading-none"
+                  onClick={handleCloseTxNotice}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  className="absolute right-2 top-2 z-20 h-8 w-8 rounded-full border-2 border-black bg-white text-black text-lg font-black leading-none touch-manipulation"
                   aria-label="Close transaction status"
                 >
                   ×
