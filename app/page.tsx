@@ -6,10 +6,9 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { encodeFunctionData } from 'viem';
 import { 
   Transaction, 
-  TransactionButton, 
-  TransactionStatus, 
-  TransactionStatusLabel
+  TransactionButton
 } from '@coinbase/onchainkit/transaction';
+import type { LifecycleStatus, TransactionError, TransactionResponseType } from '@coinbase/onchainkit/transaction';
 import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from './contract';
 import { getClientPaymasterUrl } from './paymaster';
@@ -39,10 +38,24 @@ const SHARE_BUTTON_CLASS = `${CTA_BASE_CLASS} bg-white text-black border-black h
 const CONNECT_BUTTON_CLASS =
   "!w-full !min-h-14 sm:!min-h-16 !px-4 sm:!px-6 !py-3 !rounded-xl !border-4 !border-black !bg-[#7c89ff] !text-white !font-black !uppercase !leading-tight !whitespace-nowrap !text-[clamp(0.75rem,3.9vw,1.5rem)] !shadow-[0_6px_0_0_#5a65c0] transition-all hover:!bg-[#6f7cf5] active:!shadow-none active:translate-x-1 active:translate-y-1";
 
+type TxNotice = {
+  phase: 'idle' | 'pending' | 'success' | 'error';
+  message: string;
+  txHash?: string;
+};
+
+const TX_NOTICE_STYLE = {
+  pending: 'bg-yellow-200 text-black border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]',
+  success: 'bg-[#05ffa1] text-black border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]',
+  error: 'bg-[#ff8fa3] text-black border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]',
+} as const;
+
 export default function Home() {
   const { address } = useAccount();
   const [isCracked, setIsCracked] = useState(false);
   const [fortune, setFortune] = useState("");
+  const [txNotice, setTxNotice] = useState<TxNotice>({ phase: 'idle', message: '' });
+  const [isTxNoticeOpen, setIsTxNoticeOpen] = useState(false);
   const paymasterUrl = getClientPaymasterUrl();
   const hasPaymaster = Boolean(paymasterUrl);
   const capabilities = useMemo(() => {
@@ -91,6 +104,72 @@ export default function Home() {
     const warpcastUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
     sdk.actions.openUrl(warpcastUrl);
   };
+
+  const showPendingNotice = () => {
+    setTxNotice({
+      phase: 'pending',
+      message: 'TRANSACTION IN PROGRESS...',
+    });
+    setIsTxNoticeOpen(true);
+  };
+
+  const handleTxStatus = (status: LifecycleStatus) => {
+    if (
+      status.statusName === 'buildingTransaction' ||
+      status.statusName === 'transactionPending' ||
+      status.statusName === 'transactionLegacyExecuted'
+    ) {
+      showPendingNotice();
+      return;
+    }
+
+    if (status.statusName === 'success') {
+      const txHash = status.statusData.transactionReceipts[0]?.transactionHash;
+      setTxNotice({
+        phase: 'success',
+        message: 'TRANSACTION SUCCESSFUL',
+        txHash,
+      });
+      setIsTxNoticeOpen(true);
+      return;
+    }
+
+    if (status.statusName === 'error') {
+      setTxNotice({
+        phase: 'error',
+        message: status.statusData?.message
+          ? `TRANSACTION FAILED: ${status.statusData.message.toUpperCase()}`
+          : 'TRANSACTION FAILED',
+      });
+      setIsTxNoticeOpen(true);
+    }
+  };
+
+  const handleTxSuccess = (response: TransactionResponseType) => {
+    const txHash = response.transactionReceipts[0]?.transactionHash;
+    setTxNotice({
+      phase: 'success',
+      message: 'TRANSACTION SUCCESSFUL',
+      txHash,
+    });
+    setIsTxNoticeOpen(true);
+  };
+
+  const handleTxError = (error: TransactionError) => {
+    setTxNotice({
+      phase: 'error',
+      message: error?.message ? `TRANSACTION FAILED: ${error.message.toUpperCase()}` : 'TRANSACTION FAILED',
+    });
+    setIsTxNoticeOpen(true);
+  };
+
+  const closeTxNotice = () => {
+    if (txNotice.phase === 'success' || txNotice.phase === 'error') {
+      setIsTxNoticeOpen(false);
+    }
+  };
+
+  const txExplorerUrl = txNotice.txHash ? `https://sepolia.basescan.org/tx/${txNotice.txHash}` : null;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-t from-[#ff71ce] via-[#b967ff] to-[#05ffa1] text-white px-4 pt-6 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6 font-mono">
@@ -152,11 +231,11 @@ export default function Home() {
               calls={calls}
               isSponsored={hasPaymaster}
               capabilities={capabilities}
+              onStatus={handleTxStatus}
+              onSuccess={handleTxSuccess}
+              onError={handleTxError}
             >
               <TransactionButton className={CLAIM_BUTTON_CLASS} text="CLAIM YOUR 🍪 NOW" />
-              <TransactionStatus>
-                <TransactionStatusLabel className="text-center mt-2 text-xs" />
-              </TransactionStatus>
             </Transaction>
           ) : (
             <Wallet>
@@ -180,6 +259,40 @@ export default function Home() {
           >
             Share Fortune ↗
           </motion.button>
+
+          {isTxNoticeOpen && txNotice.phase !== 'idle' && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`relative w-full rounded-xl border-4 p-4 sm:p-5 ${TX_NOTICE_STYLE[txNotice.phase]}`}
+            >
+              {(txNotice.phase === 'success' || txNotice.phase === 'error') && (
+                <button
+                  type="button"
+                  onClick={closeTxNotice}
+                  className="absolute right-2 top-2 h-8 w-8 rounded-full border-2 border-black bg-white text-black text-lg font-black leading-none"
+                  aria-label="Close transaction status"
+                >
+                  ×
+                </button>
+              )}
+
+              <p className="pr-10 text-[clamp(0.85rem,4vw,1.1rem)] font-black uppercase leading-tight">
+                {txNotice.message}
+              </p>
+
+              {txNotice.phase === 'success' && txExplorerUrl && (
+                <a
+                  href={txExplorerUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex rounded-lg border-2 border-black bg-white px-3 py-2 text-sm font-black uppercase text-black transition hover:bg-black hover:text-white"
+                >
+                  View Transaction ↗
+                </a>
+              )}
+            </motion.div>
+          )}
         </motion.div>
       )}
 
