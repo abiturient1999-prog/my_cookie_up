@@ -1,35 +1,35 @@
 ﻿{
-  "miniapp": {
-    "name": "Based Cookie",
-    "version": "1",
-    "iconUrl": "https://basedcookie.vercel.app/icon.png",
-    "homeUrl": "https://basedcookie.vercel.app",
-    "splashImageUrl": "https://basedcookie.vercel.app/splash.png",
-    "splashBackgroundColor": "#0052FF",
-    "webhookUrl": "https://basedcookie.vercel.app/api/webhook",
-    "subtitle": "Crack fortune and share vibe",
-    "description": "Based Cookie is an interactive Mini App on Farcaster. Crack open digital fortune cookies, share wisdom in your feed and engage with the community on the Base network",
-    "primaryCategory": "entertainment",
-    "screenshotUrls": [
-      "https://basedcookie.vercel.app/screenshot1.png",
-      "https://basedcookie.vercel.app/screenshot2.png"
-    ],
-    "heroImageUrl": "https://basedcookie.vercel.app/hero.png",
-    "tags": [
-      "farcaster",
-      "frame",
-      "cookie",
-      "base"
-    ],
-    "tagline": "click to reveal your destiny",
-    "ogTitle": "Based Cookie: My prediction",
-    "ogDescription": "I just broke the cookie in Based Cookie! Find out what's waiting for you.",
-    "ogImageUrl": "https://basedcookie.vercel.app/og-image.png",
-    "noindex": false
-  },
-  "accountAssociation": {
-    "header": "eyJmaWQiOjI3Njk4NzgsInR5cGUiOiJhdXRoIiwia2V5IjoiMHg3ZGRDMmFDMTA1NzYwM0E0ODRlQ2JFM0VlM0FBRDZCYzNFMDkwQ2U3In0",
-    "payload": "eyJkb21haW4iOiJiYXNlZGNvb2tpZS52ZXJjZWwuYXBwIn0",
-    "signature": "j6UosHtl/uqyCAvzgUuo8RKbMlDS7Mx49wMmsnY3CLAdhDMbdTypd1YVszb+V+jg0UjHNQ2nqHaSOxeQa+zVKBw="
-  }
+    "miniapp":  {
+                    "name":  "Based Cookie",
+                    "version":  "1",
+                    "iconUrl":  "https://basedcookie.vercel.app/icon-v2.png",
+                    "homeUrl":  "https://basedcookie.vercel.app",
+                    "splashImageUrl":  "https://basedcookie.vercel.app/splash.png",
+                    "splashBackgroundColor":  "#0052FF",
+                    "webhookUrl":  "https://basedcookie.vercel.app/api/webhook",
+                    "subtitle":  "Crack fortune and share vibe",
+                    "description":  "Based Cookie is an interactive Mini App on Farcaster. Crack open digital fortune cookies, share wisdom in your feed and engage with the community on the Base network",
+                    "primaryCategory":  "entertainment",
+                    "screenshotUrls":  [
+                                           "https://basedcookie.vercel.app/screenshot1.png",
+                                           "https://basedcookie.vercel.app/screenshot2.png"
+                                       ],
+                    "heroImageUrl":  "https://basedcookie.vercel.app/hero.png",
+                    "tags":  [
+                                 "farcaster",
+                                 "frame",
+                                 "cookie",
+                                 "base"
+                             ],
+                    "tagline":  "click to reveal your destiny",
+                    "ogTitle":  "Based Cookie: My prediction",
+                    "ogDescription":  "I just broke the cookie in Based Cookie! Find out what\u0027s waiting for you.",
+                    "ogImageUrl":  "https://basedcookie.vercel.app/og-image.png",
+                    "noindex":  false
+                },
+    "accountAssociation":  {
+                               "header":  "eyJmaWQiOjI3Njk4NzgsInR5cGUiOiJhdXRoIiwia2V5IjoiMHg3ZGRDMmFDMTA1NzYwM0E0ODRlQ2JFM0VlM0FBRDZCYzNFMDkwQ2U3In0",
+                               "payload":  "eyJkb21haW4iOiJiYXNlZGNvb2tpZS52ZXJjZWwuYXBwIn0",
+                               "signature":  "j6UosHtl/uqyCAvzgUuo8RKbMlDS7Mx49wMmsnY3CLAdhDMbdTypd1YVszb+V+jg0UjHNQ2nqHaSOxeQa+zVKBw="
+                           }
 }
