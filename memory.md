@@ -2,9 +2,18 @@
 
 ## Meta
 - Language preference: Russian (`ru`)
+- Reply format preference: first line of every answer must be `🐼`
 - Project root: `c:\Users\bulat\Desktop\CURSOR\New folder\my_cookie_up`
 - Stack: Next.js 15, React 19, TypeScript, Wagmi, Viem, OnchainKit, Farcaster MiniApp
 - Working rule: before each further response, use this file as source of truth and update it after significant code/architecture/task changes.
+
+## MCP snapshot
+- Global MCP config path (outside project): `c:\Users\bulat\.cursor\mcp.json`
+- Configured server:
+  - name: `Coinbase Developer`
+  - url: `https://docs.cdp.coinbase.com/mcp`
+  - headers: `{}`
+- Requested topic for study: `mcp_Coinbase_Developer_SearchCoinbaseDeveloper` (belongs to Coinbase Developer MCP toolset).
 
 ## Environment snapshot
 - `.env`:

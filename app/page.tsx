@@ -8,8 +8,7 @@ import {
   Transaction, 
   TransactionButton, 
   TransactionStatus, 
-  TransactionStatusLabel, 
-  TransactionStatusAction 
+  TransactionStatusLabel
 } from '@coinbase/onchainkit/transaction';
 import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from './contract';
@@ -150,7 +149,6 @@ export default function Home() {
               <TransactionButton className="w-full text-lg sm:text-2xl h-14 sm:h-20 bg-black text-white border-4 border-white font-black hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1" text="CLAIM YOUR 🍪 NOW" />
               <TransactionStatus>
                 <TransactionStatusLabel className="text-center mt-2 text-xs" />
-                <TransactionStatusAction />
               </TransactionStatus>
             </Transaction>
           ) : (
