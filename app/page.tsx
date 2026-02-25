@@ -37,6 +37,7 @@ const CLAIM_BUTTON_CLASS = `${CTA_BASE_CLASS} bg-black text-white border-white h
 const SHARE_BUTTON_CLASS = `${CTA_BASE_CLASS} bg-white text-black border-black hover:bg-cyan-300 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]`;
 const CONNECT_BUTTON_CLASS =
   "!w-full !min-h-14 sm:!min-h-16 !px-4 sm:!px-6 !py-3 !rounded-xl !border-4 !border-black !bg-[#7c89ff] !text-white !font-black !uppercase !leading-tight !whitespace-nowrap !text-[clamp(0.75rem,3.9vw,1.5rem)] !shadow-[0_6px_0_0_#5a65c0] transition-all hover:!bg-[#6f7cf5] active:!shadow-none active:translate-x-1 active:translate-y-1";
+const CLAIM_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 type TxNotice = {
   phase: 'pending' | 'success' | 'error';
@@ -56,6 +57,8 @@ export default function Home() {
   const [fortune, setFortune] = useState("");
   const [txNotice, setTxNotice] = useState<TxNotice | null>(null);
   const [dismissedNoticeKey, setDismissedNoticeKey] = useState<string | null>(null);
+  const [cooldownEndsAt, setCooldownEndsAt] = useState<number | null>(null);
+  const [nowMs, setNowMs] = useState<number>(() => Date.now());
   const paymasterUrl = getClientPaymasterUrl();
   const hasPaymaster = Boolean(paymasterUrl);
   const capabilities = useMemo(() => {
@@ -85,6 +88,26 @@ export default function Home() {
   useEffect(() => {
     sdk.actions.ready();
   }, []);
+
+  useEffect(() => {
+    if (!cooldownEndsAt) {
+      return;
+    }
+
+    const timerId = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [cooldownEndsAt]);
+
+  useEffect(() => {
+    if (cooldownEndsAt && cooldownEndsAt <= nowMs) {
+      setCooldownEndsAt(null);
+    }
+  }, [cooldownEndsAt, nowMs]);
 
   const playCrunch = () => {
     const audio = new Audio('/crunch.mp3');
@@ -136,6 +159,7 @@ export default function Home() {
 
     if (status.statusName === 'success') {
       const txHash = status.statusData.transactionReceipts[0]?.transactionHash;
+      setCooldownEndsAt(Date.now() + CLAIM_COOLDOWN_MS);
       openNotice({
         phase: 'success',
         message: 'TRANSACTION SUCCESSFUL',
@@ -171,6 +195,19 @@ export default function Home() {
   };
 
   const txExplorerUrl = txNotice?.txHash ? `https://sepolia.basescan.org/tx/${txNotice.txHash}` : null;
+  const remainingCooldownMs = cooldownEndsAt ? Math.max(cooldownEndsAt - nowMs, 0) : 0;
+  const isCooldownActive = remainingCooldownMs > 0;
+
+  const formatCooldown = (milliseconds: number) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return [hours, minutes, seconds]
+      .map((value) => value.toString().padStart(2, '0'))
+      .join(':');
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-t from-[#ff71ce] via-[#b967ff] to-[#05ffa1] text-white px-4 pt-6 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6 font-mono">
@@ -227,26 +264,37 @@ export default function Home() {
           className="mt-6 w-full max-w-sm sm:max-w-md flex flex-col gap-4"
         >
           {address ? (
-            <Transaction
-              chainId={84532}
-              calls={calls}
-              isSponsored={hasPaymaster}
-              capabilities={capabilities}
-              onStatus={handleTxStatus}
-            >
-              <TransactionButton
-                render={({ status, onSubmit, isDisabled }) => (
-                  <button
-                    type="button"
-                    onClick={onSubmit}
-                    disabled={isDisabled || status === 'pending'}
-                    className={`${CLAIM_BUTTON_CLASS} disabled:cursor-not-allowed disabled:opacity-85`}
-                  >
-                    {status === 'pending' ? 'TRANSACTION IN PROGRESS...' : 'CLAIM YOUR 🍪 NOW'}
-                  </button>
-                )}
-              />
-            </Transaction>
+            isCooldownActive ? (
+              <div className="w-full rounded-xl border-4 border-black bg-yellow-200 p-4 text-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <p className="text-center text-[clamp(0.85rem,4vw,1.1rem)] font-black uppercase leading-tight">
+                  NEXT CLAIM IN
+                </p>
+                <p className="mt-2 text-center text-[clamp(1.1rem,5vw,1.6rem)] font-black tracking-wide">
+                  {formatCooldown(remainingCooldownMs)}
+                </p>
+              </div>
+            ) : (
+              <Transaction
+                chainId={84532}
+                calls={calls}
+                isSponsored={hasPaymaster}
+                capabilities={capabilities}
+                onStatus={handleTxStatus}
+              >
+                <TransactionButton
+                  render={({ onSubmit, isDisabled }) => (
+                    <button
+                      type="button"
+                      onClick={onSubmit}
+                      disabled={isDisabled}
+                      className={`${CLAIM_BUTTON_CLASS} disabled:cursor-not-allowed disabled:opacity-85`}
+                    >
+                      CLAIM YOUR 🍪 NOW
+                    </button>
+                  )}
+                />
+              </Transaction>
+            )
           ) : (
             <Wallet>
               <motion.div
