@@ -32,6 +32,13 @@ const FORTUNES = [
   "GO TO BASE, DON'T LOOK BACK \u{1F535}"
 ];
 
+const CTA_BASE_CLASS =
+  "w-full min-h-14 sm:min-h-16 px-4 sm:px-6 py-3 rounded-xl border-4 font-black uppercase leading-tight whitespace-nowrap text-[clamp(0.75rem,3.9vw,1.5rem)] transition-all active:shadow-none active:translate-x-1 active:translate-y-1";
+const CLAIM_BUTTON_CLASS = `${CTA_BASE_CLASS} bg-black text-white border-white hover:bg-yellow-400 hover:text-black hover:border-black shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]`;
+const SHARE_BUTTON_CLASS = `${CTA_BASE_CLASS} bg-white text-black border-black hover:bg-cyan-300 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]`;
+const CONNECT_BUTTON_CLASS =
+  "!w-full !min-h-14 sm:!min-h-16 !px-4 sm:!px-6 !py-3 !rounded-xl !border-4 !border-black !bg-[#7c89ff] !text-white !font-black !uppercase !leading-tight !whitespace-nowrap !text-[clamp(0.75rem,3.9vw,1.5rem)] !shadow-[0_6px_0_0_#5a65c0] transition-all hover:!bg-[#6f7cf5] active:!shadow-none active:translate-x-1 active:translate-y-1";
+
 export default function Home() {
   const { address } = useAccount();
   const [isCracked, setIsCracked] = useState(false);
@@ -86,7 +93,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-t from-[#ff71ce] via-[#b967ff] to-[#05ffa1] text-white p-6 font-mono">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-t from-[#ff71ce] via-[#b967ff] to-[#05ffa1] text-white px-4 pt-6 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6 font-mono">
       {/* Р—Р°РіРѕР»РѕРІРѕРє РІ СЃС‚РёР»Рµ СЂРµС‚СЂРѕ-РєРѕРјРёРєСЃР° */}
       <motion.h1 
         initial={{ y: -20 }} animate={{ y: 0 }}
@@ -137,7 +144,7 @@ export default function Home() {
       {isCracked && (
         <motion.div 
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-          className="mt-6 w-full max-w-[90%] sm:max-w-md flex flex-col gap-4"
+          className="mt-6 w-full max-w-sm sm:max-w-md flex flex-col gap-4"
         >
           {address ? (
             <Transaction
@@ -146,7 +153,7 @@ export default function Home() {
               isSponsored={hasPaymaster}
               capabilities={capabilities}
             >
-              <TransactionButton className="w-full text-lg sm:text-2xl h-14 sm:h-20 bg-black text-white border-4 border-white font-black hover:bg-yellow-400 hover:text-black hover:border-black transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] active:shadow-none active:translate-x-1 active:translate-y-1" text="CLAIM YOUR 🍪 NOW" />
+              <TransactionButton className={CLAIM_BUTTON_CLASS} text="CLAIM YOUR 🍪 NOW" />
               <TransactionStatus>
                 <TransactionStatusLabel className="text-center mt-2 text-xs" />
               </TransactionStatus>
@@ -160,7 +167,7 @@ export default function Home() {
               >
                 <ConnectWallet
                   disconnectedLabel={"CONNECT AND CLAIM \u{1F381}"}
-                  className="!bg-[#7c89ff] !text-white !font-bold !border-none !shadow-[0_6px_0_0_#5a65c0] rounded-xl"
+                  className={CONNECT_BUTTON_CLASS}
                 />
               </motion.div>
             </Wallet>
@@ -169,7 +176,7 @@ export default function Home() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleShare}
-            className="w-full text-lg sm:text-2xl h-14 sm:h-20 bg-white text-black border-4 border-black font-black uppercase hover:bg-cyan-300 transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1"
+            className={SHARE_BUTTON_CLASS}
           >
             Share Fortune ↗
           </motion.button>
