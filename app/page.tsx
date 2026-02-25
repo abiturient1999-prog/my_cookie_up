@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useState, useEffect, useMemo, type MouseEventHandler } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { motion, AnimatePresence } from 'framer-motion'; // Р”Р»СЏ РєСЂСѓС‚С‹С… Р°РЅРёРјР°С†РёР№
 import { sdk } from '@farcaster/miniapp-sdk';
@@ -8,7 +8,7 @@ import {
   Transaction, 
   TransactionButton
 } from '@coinbase/onchainkit/transaction';
-import type { LifecycleStatus, TransactionError, TransactionResponseType } from '@coinbase/onchainkit/transaction';
+import type { LifecycleStatus } from '@coinbase/onchainkit/transaction';
 import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from './contract';
 import { getClientPaymasterUrl } from './paymaster';
@@ -39,7 +39,7 @@ const CONNECT_BUTTON_CLASS =
   "!w-full !min-h-14 sm:!min-h-16 !px-4 sm:!px-6 !py-3 !rounded-xl !border-4 !border-black !bg-[#7c89ff] !text-white !font-black !uppercase !leading-tight !whitespace-nowrap !text-[clamp(0.75rem,3.9vw,1.5rem)] !shadow-[0_6px_0_0_#5a65c0] transition-all hover:!bg-[#6f7cf5] active:!shadow-none active:translate-x-1 active:translate-y-1";
 
 type TxNotice = {
-  phase: 'idle' | 'pending' | 'success' | 'error';
+  phase: 'pending' | 'success' | 'error';
   message: string;
   txHash?: string;
 };
@@ -54,8 +54,8 @@ export default function Home() {
   const { address } = useAccount();
   const [isCracked, setIsCracked] = useState(false);
   const [fortune, setFortune] = useState("");
-  const [txNotice, setTxNotice] = useState<TxNotice>({ phase: 'idle', message: '' });
-  const [isTxNoticeOpen, setIsTxNoticeOpen] = useState(false);
+  const [txNotice, setTxNotice] = useState<TxNotice | null>(null);
+  const [dismissedNoticeKey, setDismissedNoticeKey] = useState<string | null>(null);
   const paymasterUrl = getClientPaymasterUrl();
   const hasPaymaster = Boolean(paymasterUrl);
   const capabilities = useMemo(() => {
@@ -105,12 +105,23 @@ export default function Home() {
     sdk.actions.openUrl(warpcastUrl);
   };
 
+  const buildNoticeKey = (notice: TxNotice) => `${notice.phase}:${notice.txHash ?? notice.message}`;
+
+  const openNotice = (notice: TxNotice) => {
+    const key = buildNoticeKey(notice);
+    if (dismissedNoticeKey === key) {
+      return;
+    }
+
+    setTxNotice(notice);
+  };
+
   const showPendingNotice = () => {
-    setTxNotice({
+    setDismissedNoticeKey(null);
+    openNotice({
       phase: 'pending',
       message: 'TRANSACTION IN PROGRESS...',
     });
-    setIsTxNoticeOpen(true);
   };
 
   const handleTxStatus = (status: LifecycleStatus) => {
@@ -125,56 +136,41 @@ export default function Home() {
 
     if (status.statusName === 'success') {
       const txHash = status.statusData.transactionReceipts[0]?.transactionHash;
-      setTxNotice({
+      openNotice({
         phase: 'success',
         message: 'TRANSACTION SUCCESSFUL',
         txHash,
       });
-      setIsTxNoticeOpen(true);
       return;
     }
 
     if (status.statusName === 'error') {
-      setTxNotice({
+      openNotice({
         phase: 'error',
         message: status.statusData?.message
           ? `TRANSACTION FAILED: ${status.statusData.message.toUpperCase()}`
           : 'TRANSACTION FAILED',
       });
-      setIsTxNoticeOpen(true);
+      return;
+    }
+
+    if (status.statusName === 'reset' || status.statusName === 'transactionIdle') {
+      setTxNotice(null);
+      setDismissedNoticeKey(null);
+      return;
     }
   };
 
-  const handleTxSuccess = (response: TransactionResponseType) => {
-    const txHash = response.transactionReceipts[0]?.transactionHash;
-    setTxNotice({
-      phase: 'success',
-      message: 'TRANSACTION SUCCESSFUL',
-      txHash,
-    });
-    setIsTxNoticeOpen(true);
-  };
-
-  const handleTxError = (error: TransactionError) => {
-    setTxNotice({
-      phase: 'error',
-      message: error?.message ? `TRANSACTION FAILED: ${error.message.toUpperCase()}` : 'TRANSACTION FAILED',
-    });
-    setIsTxNoticeOpen(true);
-  };
-
   const closeTxNotice = () => {
-    setIsTxNoticeOpen(false);
-    setTxNotice({ phase: 'idle', message: '' });
+    if (!txNotice) {
+      return;
+    }
+
+    setDismissedNoticeKey(buildNoticeKey(txNotice));
+    setTxNotice(null);
   };
 
-  const handleCloseTxNotice: MouseEventHandler<HTMLButtonElement> = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    closeTxNotice();
-  };
-
-  const txExplorerUrl = txNotice.txHash ? `https://sepolia.basescan.org/tx/${txNotice.txHash}` : null;
+  const txExplorerUrl = txNotice?.txHash ? `https://sepolia.basescan.org/tx/${txNotice.txHash}` : null;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-t from-[#ff71ce] via-[#b967ff] to-[#05ffa1] text-white px-4 pt-6 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6 font-mono">
@@ -237,15 +233,18 @@ export default function Home() {
               isSponsored={hasPaymaster}
               capabilities={capabilities}
               onStatus={handleTxStatus}
-              onSuccess={handleTxSuccess}
-              onError={handleTxError}
             >
               <TransactionButton
-                className={CLAIM_BUTTON_CLASS}
-                text="CLAIM YOUR 🍪 NOW"
-                pendingOverride={{ text: 'TRANSACTION IN PROGRESS...' }}
-                successOverride={{ text: 'CLAIM COMPLETED ✅', onClick: () => undefined }}
-                errorOverride={{ text: 'TRY CLAIM AGAIN', onClick: () => undefined }}
+                render={({ status, onSubmit, isDisabled }) => (
+                  <button
+                    type="button"
+                    onClick={onSubmit}
+                    disabled={isDisabled || status === 'pending'}
+                    className={`${CLAIM_BUTTON_CLASS} disabled:cursor-not-allowed disabled:opacity-85`}
+                  >
+                    {status === 'pending' ? 'TRANSACTION IN PROGRESS...' : 'CLAIM YOUR 🍪 NOW'}
+                  </button>
+                )}
               />
             </Transaction>
           ) : (
@@ -270,29 +269,39 @@ export default function Home() {
           >
             Share Fortune ↗
           </motion.button>
+        </motion.div>
+      )}
 
-          {isTxNoticeOpen && txNotice.phase !== 'idle' && (
+      <AnimatePresence>
+        {txNotice && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          >
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`relative w-full rounded-xl border-4 p-4 sm:p-5 ${TX_NOTICE_STYLE[txNotice.phase]}`}
+              initial={{ y: 24, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 24, opacity: 0 }}
+              className={`relative w-full max-w-sm rounded-xl border-4 p-4 sm:p-5 ${TX_NOTICE_STYLE[txNotice.phase]}`}
             >
               {(txNotice.phase === 'success' || txNotice.phase === 'error') && (
                 <button
                   type="button"
-                  onClick={handleCloseTxNotice}
-                  onPointerDown={(event) => {
+                  onClick={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
+                    closeTxNotice();
                   }}
-                  className="absolute right-2 top-2 z-20 h-8 w-8 rounded-full border-2 border-black bg-white text-black text-lg font-black leading-none touch-manipulation"
+                  className="absolute right-2 top-2 z-20 h-9 w-9 rounded-full border-2 border-black bg-white text-black text-xl font-black leading-none touch-manipulation"
                   aria-label="Close transaction status"
                 >
                   ×
                 </button>
               )}
 
-              <p className="pr-10 text-[clamp(0.85rem,4vw,1.1rem)] font-black uppercase leading-tight">
+              <p className="pr-10 text-[clamp(0.95rem,4.4vw,1.2rem)] font-black uppercase leading-tight">
                 {txNotice.message}
               </p>
 
@@ -307,9 +316,9 @@ export default function Home() {
                 </a>
               )}
             </motion.div>
-          )}
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {!isCracked && (
         <p className="mt-12 text-blue-200 animate-pulse text-xs uppercase tracking-widest">
