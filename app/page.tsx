@@ -246,7 +246,7 @@ export default function Home() {
       setDismissedNoticeKey(null);
       return;
     }
-  }, [address, fortuneId]);
+  }, [address, fortuneId, openNotice, showPendingNotice]);
 
 
   const closeTxNotice = () => {
