@@ -1,160 +1,191 @@
-﻿# memory.md
+# memory.md
 
 ## Meta
-- Language preference: Russian (`ru`)
-- Reply format preference: first line of every answer must be `🐼`
+- Language: `ru`
+- Reply prefix rule: first line must be `🐼`
 - Project root: `c:\Users\bulat\Desktop\CURSOR\New folder\my_cookie_up`
-- Stack: Next.js 15, React 19, TypeScript, Wagmi, Viem, OnchainKit, Farcaster MiniApp
-- Working rule: before each further response, use this file as source of truth and update it after significant code/architecture/task changes.
+- Stack: `Next.js 15`, `React 19`, `TypeScript`, `wagmi`, `viem`, `OnchainKit`, `Farcaster MiniApp SDK`
+- Operating rule (user-defined): before each response, consult this file; update it after significant changes.
 
-## MCP snapshot
-- Global MCP config path (outside project): `c:\Users\bulat\.cursor\mcp.json`
-- Configured server:
-  - name: `Coinbase Developer`
-  - url: `https://docs.cdp.coinbase.com/mcp`
-  - headers: `{}`
-- Requested topic for study: `mcp_Coinbase_Developer_SearchCoinbaseDeveloper` (belongs to Coinbase Developer MCP toolset).
+## Environment
+- `.env` and `.env.local` (см. также `docs/env-and-schema.md`):
+  - `NEXT_PUBLIC_BASE_NETWORK=sepolia|mainnet` — сеть приложения (по умолчанию sepolia).
+  - `NEXT_PUBLIC_COOKIEJAR_ADDRESS` — адрес контракта (legacy); опционально `_SEPOLIA` / `_MAINNET` по сети.
+  - `CDP_PAYMASTER_URL` — upstream Paymaster для proxy (Sepolia или mainnet по окружению).
+  - `NEXT_PUBLIC_PAYMASTER_PROXY_SERVER_URL=/api/paymaster`; опционально `NEXT_PUBLIC_PAYMASTER_SEPOLIA_URL`, `NEXT_PUBLIC_PAYMASTER_MAINNET_URL`.
+  - `.env.local` additionally: `PAYMASTER_PROXY_DEBUG=1`
+  - Для этапа 2: `DATABASE_URL` (Neon pooler connection string).
+- Security note: public client key exposure acknowledged; key rotation remains recommended.
 
-## Environment snapshot
-- `.env`:
-  - `NEXT_PUBLIC_ONCHAINKIT_API_KEY=MWcCz1uvDUPKd7UkafDA2bsG6ny244kt`
-  - `NEXT_PUBLIC_COOKIEJAR_ADDRESS=0xEdE3bd8e85557DA8184cfF520d617489CC7e4093`
-  - `CDP_PAYMASTER_URL=https://api.developer.coinbase.com/rpc/v1/base-sepolia/MWcCz1uvDUPKd7UkafDA2bsG6ny244kt`
-  - `NEXT_PUBLIC_PAYMASTER_PROXY_SERVER_URL=/api/paymaster`
-- `.env.local`:
-  - same as `.env`
-  - `PAYMASTER_PROXY_DEBUG=1`
-- Security note (from dialog): client key already exposed publicly; rotation recommended.
+## MCP/Docs Context
+- MCP config path: `c:\Users\bulat\.cursor\mcp.json`
+- MCP server listed: `Coinbase Developer` (`https://docs.cdp.coinbase.com/mcp`)
+- User requirement: use Coinbase docs + public GitHub examples for architecture/UI decisions.
 
-## Accepted architecture decisions
+## Accepted Architecture Decisions
+- `paymaster_proxy_server_side`:
+  - Proxy endpoint: `app/api/paymaster/route.ts`
+  - Only `pm_*` JSON-RPC methods allowed
+  - Upstream source: server env `CDP_PAYMASTER_URL`
+- `transaction_call_shape_explicit`:
+  - Calls are explicit `{ to, data, value }`
+  - `data` from `encodeFunctionData(CONTRACT_ABI, claimReward, [])`
+  - `value = BigInt(0)`
+- `contract_address_resolution`:
+  - Priority: `NEXT_PUBLIC_COOKIEJAR_ADDRESS -> NEXT_PUBLIC_COOKIEFAUCET_ADDRESS -> default`
+  - Validated by `isAddress`; fallback to default on invalid value
+- `metadata_url_resolution`:
+  - URL source in layout metadata: `NEXT_PUBLIC_URL` fallback `https://basedcookie.vercel.app`
+  - Trailing slash trimmed
+- `paymaster_url_absolute_normalization`:
+  - Relative `/api/paymaster` normalized to absolute URL
+  - Client uses `window.location.origin`
+  - SSR fallback uses `NEXT_PUBLIC_URL`
 
-### 1) Paymaster proxy (server-side)
-- Implemented `app/api/paymaster/route.ts`.
-- Proxies only JSON-RPC methods with prefix `pm_`.
-- Upstream endpoint comes only from server env `CDP_PAYMASTER_URL`.
-- Client uses proxy URL (`/api/paymaster` or `NEXT_PUBLIC_PAYMASTER_PROXY_SERVER_URL`).
-
-### 2) Transaction call format
-- Contract call moved to explicit call object:
-  - `to`
-  - `data` (from `encodeFunctionData`)
-  - `value: BigInt(0)`
-- `isSponsored` enabled if valid paymaster URL exists on client.
-- `capabilities.paymasterService.url` also passed to `Transaction`.
-
-### 3) Contract address resolution
-- Source order:
-  1. `NEXT_PUBLIC_COOKIEJAR_ADDRESS`
-  2. `NEXT_PUBLIC_COOKIEFAUCET_ADDRESS`
-  3. default constant
-- Address validation via `isAddress` with fallback to default.
-
-### 4) MiniApp metadata URL
-- `app/layout.tsx` uses `NEXT_PUBLIC_URL` with fallback `https://basedcookie.vercel.app`.
-- Trailing slash removed.
-- `fc:miniapp` metadata includes embed image and launch URL.
-
-### 5) Paymaster URL normalization for wallet compatibility
-- `app/paymaster.ts` resolves relative `/api/paymaster` to absolute URL.
-- On client: uses `window.location.origin`.
-- SSR fallback: uses `NEXT_PUBLIC_URL`.
-- Motivation: wallet rejected relative capability URL (`invalid request: capabilities.paymasterService.url = /api/paymaster`).
-
-## Current code state (key files)
+## Current Code State
 
 ### `app/contract.ts`
-- `DEFAULT_CONTRACT_ADDRESS = 0xEdE3bd8e85557DA8184cfF520d617489CC7e4093`
-- `CONTRACT_ADDRESS` is env-driven + validated.
-- `CONTRACT_ABI` contains `claimReward()`.
+- `DEFAULT_CONTRACT_ADDRESS = 0xEdE3...`
+- `CONTRACT_ADDRESS`: по сети (`getBaseNetwork`) выбирается `_SEPOLIA` / `_MAINNET` или legacy env; validated `0x${string}`
+- ABI includes `claimReward()`
+
+### `lib/network.ts`
+- `getBaseNetwork(): 'sepolia' | 'mainnet'` из `NEXT_PUBLIC_BASE_NETWORK`
+- `getChainId()` — 84532 (Sepolia) или 8453 (mainnet)
+- `getExplorerTxUrl(txHash)` — sepolia.basescan.org или basescan.org
+
+### `lib/fortune.ts`
+- `getTodayUtc()`, `getTodayFortuneIndex(fid, dateUtc)`, `getTodayFortuneIndexInArray(fid, dateUtc, length)` — детерминированная фортуна по (fid, date).
+
+### `lib/fortune-definitions.ts`
+- `FORTUNE_DEFINITIONS`, `FORTUNES_TEXTS` — общий справочник для клиента и API.
+
+### `lib/fortune-store.ts`
+- In-memory store клеймов (этап 1); ключ `fid:address`; на этапе 2 — Neon.
+
+### `lib/auth.ts`
+- `getUrlHost(request)`, `getFidFromRequest(request)` — верификация Farcaster JWT для API.
+
+### `app/api/fortune/status/route.ts`
+- `GET /api/fortune/status?address=0x...` — возвращает `{ status: FortuneStatus }` (JWT обязателен).
+
+### `app/api/fortune/claim/route.ts`
+- `POST /api/fortune/claim` — body `{ address, fortuneId, txHash?, claimedAt? }`; возвращает `claim`, `updatedStatus`, `updatedStats`; коды ошибок `COOLDOWN_ACTIVE`, `INVALID_FORTUNE_ID`.
 
 ### `app/paymaster.ts`
-- `isValidPaymasterUrl(url)` accepts absolute `http(s)` and relative `/...`.
-- `resolveAbsolutePaymasterUrl(configuredUrl)` converts relative path to absolute URL.
-- `getClientPaymasterUrl()` returns normalized absolute URL or `null`.
+- Constants:
+  - `ABSOLUTE_HTTP_URL_REGEX = ^https?://`
+  - `RELATIVE_PATH_REGEX = ^/(?!/)`
+- Functions:
+  - `isValidPaymasterUrl(url): boolean`
+  - `trimTrailingSlash(url): string`
+  - `resolveAbsolutePaymasterUrl(configuredUrl): string | null`
+  - `getClientPaymasterUrl(): string | null`
 
 ### `app/api/paymaster/route.ts`
-- Validates JSON-RPC shape.
-- Allows only `pm_*` methods.
-- Rejects invalid JSON (`400`), invalid method (`403`), missing config (`500`), upstream unreachable (`502`).
-- Debug mode (`PAYMASTER_PROXY_DEBUG=1`):
-  - logs parsed selector/target/value
-  - adds response headers:
+- Constants:
+  - `PAYMASTER_METHOD_PREFIX = pm_`
+  - `JSON_CONTENT_TYPE = application/json`
+  - `EXECUTE_SELECTOR = 0xb61d27f6`
+  - `EXECUTE_BATCH_SELECTOR = 0x47e1da2a`
+- Functions:
+  - `isJsonRpcRequest(value)`
+  - `isAllowedRequest(payload)`
+  - `getPaymasterEndpoint()`
+  - `parseExecuteTarget(callData)`
+  - `getUserOperationCallData(payload)`
+  - `POST(request)`
+- Behavior:
+  - `400` invalid JSON
+  - `403` non-`pm_*`
+  - `500` missing `CDP_PAYMASTER_URL`
+  - `502` upstream fetch failure
+  - Debug headers when `PAYMASTER_PROXY_DEBUG=1`:
     - `x-paymaster-debug-selector`
     - `x-paymaster-debug-target`
     - `x-paymaster-debug-value`
-- Parse helpers for `execute` / `executeBatch` selectors:
-  - `0xb61d27f6`
-  - `0x47e1da2a`
 
 ### `app/rootProvider.tsx`
-- `OnchainKitProvider`:
-  - `chain: baseSepolia`
-  - `config.paymaster: getClientPaymasterUrl()`
-  - wallet display modal, preference all
-  - miniKit enabled + autoConnect
-
-### `app/page.tsx` (current)
-- Uses:
-  - `useAccount`
-  - `encodeFunctionData` for `claimReward`
-  - `Transaction`, `TransactionButton`, `TransactionStatus`, `TransactionStatusLabel`, `TransactionStatusAction`
-  - `Wallet`, `ConnectWallet`
-- State:
-  - `isCracked`, `fortune`
-- Paymaster:
-  - `paymasterUrl`, `hasPaymaster`, `capabilities.paymasterService.url`
-- Calls:
-  - `to: CONTRACT_ADDRESS`
-  - `data: claimRewardData`
-  - `value: BigInt(0)`
-- Share:
-  - `handleShare()` builds Warpcast compose URL and calls `sdk.actions.openUrl(warpcastUrl)`
-- Layout/UI (latest accepted edits):
-  - cookie container: `min-h-[420px]`
-  - action container: `mt-6 w-full max-w-[90%] sm:max-w-md flex flex-col gap-4`
-  - claim button text: `CLAIM YOUR 🍪 NOW`
-  - claim button class uses responsive `text-lg sm:text-2xl` and `h-14 sm:h-20`
-  - share button exists below transaction area with matching responsive retro style
-- Note: despite earlier request to remove `View transaction`, current `page.tsx` still imports and renders `TransactionStatusAction` (state of latest file).
+- OnchainKit provider:
+  - chain: `base` или `baseSepolia` по `getChainId()` (`NEXT_PUBLIC_BASE_NETWORK`)
+  - paymaster: `getClientPaymasterUrl()`
+  - wallet display: `modal`
+  - wallet preference: `all`
+  - miniKit: `enabled`, `autoConnect: true`
 
 ### `app/layout.tsx`
-- `getAppUrl()` derives app URL from `NEXT_PUBLIC_URL` with fallback.
-- `generateMetadata()` sets Farcaster/Base metadata payload.
+- Functions:
+  - `getAppUrl()`
+  - `generateMetadata()`
+- Metadata:
+  - `base:app_id = 697a5a842dbd4b464042ae9a`
+  - `fc:miniapp` object built dynamically from app URL
 
-## Verification history
-- Multiple successful runs during dialog:
-  - `npx tsc --noEmit` (pass after each valid patch)
-  - `npm run lint` pass with warning about `<img>` usage
-- Known environment limitations observed previously:
-  - `npm run build` in sandbox failed fetching Google Fonts
-  - `npm run dev` sandbox `spawn EPERM` (environment restriction)
+### `app/page.tsx` (latest)
+- Imports: OnchainKit, MiniApp SDK, `getChainId`/`getExplorerTxUrl` (lib/network), `getTodayUtc`/`getTodayFortuneIndexInArray` (lib/fortune), `FORTUNE_DEFINITIONS` (lib/fortune-definitions).
+- Constants: `CTA_BASE_CLASS`, `CLAIM_BUTTON_CLASS`, `SHARE_BUTTON_CLASS`, `CONNECT_BUTTON_CLASS`, `TX_NOTICE_STYLE`.
+- Types: `TxNotice = { phase, message, txHash? }`
+- State: `userFid`, `isCracked`, `fortune`, `fortuneId`, `txNotice`, `dismissedNoticeKey`, `cooldownEndsAt`, `nowMs`
+- Derived values:
+  - `paymasterUrl`, `hasPaymaster`, `capabilities`, `claimRewardData`, `calls`
+  - `txExplorerUrl` через `getExplorerTxUrl(txHash)` (сеть из env)
+  - `remainingCooldownMs`, `isCooldownActive`
+- Effects:
+  - `sdk.actions.ready()`
+  - fetch `/api/auth` → `userFid`
+  - при наличии `address` fetch `GET /api/fortune/status?address=...` → синхронизация `cooldownEndsAt`
+  - cooldown ticker и auto-clear
+- Functions:
+  - `playCrunch()`
+  - `handleCrack()`
+  - `handleShare()` -> opens Warpcast compose URL
+  - `buildNoticeKey(notice)`
+  - `openNotice(notice)` (respects dismissed key)
+  - `showPendingNotice()`
+  - `handleTxStatus(status)`:
+    - pending lifecycle → pending notice
+    - success → `POST /api/fortune/claim` с `address`, `fortuneId`, `txHash`; обновление кулдауна из `updatedStatus`; success/error notice
+    - error → разбор по коду/сообщению (user rejected, paymaster -32002, и т.д.) через `getTxErrorMessage(status)`
+    - reset/idle → clear notice
+  - `closeTxNotice()`
+  - `formatCooldown(ms) -> HH:MM:SS`
+- UI behavior:
+  - Mobile-first container with safe-area bottom padding
+  - Unified button style, rounded corners, responsive text via `clamp()`
+  - If wallet connected:
+    - During cooldown: show `NEXT CLAIM IN` timer card, hide claim button
+    - Otherwise: show claim button via `TransactionButton render`
+  - Share button always shown in cracked state
+  - Single custom transaction status overlay (`fixed`, bottom sheet style)
+  - Close button `×` shown for `success/error`; success includes explorer link
 
-## Error timeline and diagnostics (from dialog)
-- Main production error:
-  - `pm_getPaymasterStubData` code `-32002`
-  - denied: called address not in allowlist (seen address `0xd8dA...`)
-- Interpretation:
-  - policy saw unexpected target address/call, not intended contract.
-- Required diagnostics identified:
-  - collect `x-paymaster-debug-*` headers from `/api/paymaster`
-  - verify testing URL is latest deploy
-  - verify Paymaster allowlist: Base Sepolia + contract `0xEdE3...` + `claimReward()`
+## Icons / Branding State
+- Browser/Next app icons now aligned to cookie asset:
+  - `app/favicon.ico` regenerated from cookie image
+  - `app/icon.png` created
+  - `app/apple-icon.png` created
+- MiniApp manifest icon cache-bust:
+  - `public/icon-v2.png` created
+  - `public/.well-known/farcaster.json` -> `miniapp.iconUrl = https://basedcookie.vercel.app/icon-v2.png`
 
-## Task ledger (current)
-- `diagnose_actual_target`: open, waiting for real runtime debug headers.
-- `confirm_runtime_source`: open, ensure test runs on latest deployment URL.
-- `paymaster_policy_sync`: open, verify/adjust CDP allowlist.
-- `key_rotation`: recommended, rotate exposed client API key.
+## Verification History
+- Repeatedly passed: `npx tsc --noEmit`
+- Prior note: lint previously passed with `next/no-img-element` warning
 
-## Change log summary (dialog scope)
-- Implemented/adjusted:
-  - server paymaster proxy
-  - contract/address/env validation path
-  - capabilities + sponsorship in transaction flow
-  - absolute paymaster URL resolver for wallet compatibility
-  - multiple `app/page.tsx` redesign/rollback cycles
-  - share button integration via MiniKit URL open
-- Repeated rollbacks requested by user were applied as requested at each step.
+## Known Issues / Open Tasks
+- `paymaster_allowlist_denied` was observed earlier (`-32002`); runtime verification still needed on latest deploy.
+- Need runtime confirmation that:
+  - paymaster debug headers match intended contract target
+  - tests are against latest deployed URL
+  - Base Sepolia paymaster allowlist includes `0xEdE3...` and `claimReward()`
+- Cooldown currently temporary in-memory for testing; planned future migration to onchain-based cooldown source.
 
-## Current repository state
-- At snapshot creation time: `git status --short` returned clean working tree.
+## Working Preferences Captured
+- Always provide a plan before execution.
+- Focus ongoing work on frontend adaptation for mobile, button/text consistency, and transaction UX.
+
+## Based Cookie — Stage Docs
+- Stage 1 implementation guide: `docs/based-cookie-stage-1-minimal.md`
+- Stage 2 implementation guide: `docs/based-cookie-stage-2-medium.md`
+- Stage 3 implementation guide: `docs/based-cookie-stage-3-advanced.md`
+- Env и схема БД (Vercel + Neon): `docs/env-and-schema.md`

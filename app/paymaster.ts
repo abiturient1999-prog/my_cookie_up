@@ -30,9 +30,17 @@ function resolveAbsolutePaymasterUrl(configuredUrl: string): string | null {
   return null;
 }
 
+import { getBaseNetwork } from "@/lib/network";
+
+/** URL Paymaster proxy для текущей сети. Fallback: NEXT_PUBLIC_PAYMASTER_PROXY_SERVER_URL или /api/paymaster */
 export function getClientPaymasterUrl(): string | null {
+  const network = getBaseNetwork();
   const configuredUrl =
-    process.env.NEXT_PUBLIC_PAYMASTER_PROXY_SERVER_URL?.trim() || "/api/paymaster";
+    (network === "mainnet"
+      ? process.env.NEXT_PUBLIC_PAYMASTER_MAINNET_URL?.trim()
+      : process.env.NEXT_PUBLIC_PAYMASTER_SEPOLIA_URL?.trim()) ||
+    process.env.NEXT_PUBLIC_PAYMASTER_PROXY_SERVER_URL?.trim() ||
+    "/api/paymaster";
 
   if (!configuredUrl) {
     return null;

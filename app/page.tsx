@@ -1,35 +1,21 @@
-﻿'use client';
-import { useState, useEffect, useMemo } from 'react';
+'use client';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAccount } from 'wagmi';
-import { motion, AnimatePresence } from 'framer-motion'; // Р”Р»СЏ РєСЂСѓС‚С‹С… Р°РЅРёРјР°С†РёР№
+import { motion, AnimatePresence } from 'framer-motion';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { encodeFunctionData } from 'viem';
-import { 
-  Transaction, 
+import {
+  Transaction,
   TransactionButton
 } from '@coinbase/onchainkit/transaction';
 import type { LifecycleStatus } from '@coinbase/onchainkit/transaction';
 import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from './contract';
 import { getClientPaymasterUrl } from './paymaster';
-
-const FORTUNES = [
-  "EVERYTHING IS BASED ON @BASE PUMP \u{1F680}",
-  "ONCHAIN SUMMER NEVER ENDS \u{2600}\u{FE0F}",
-  "MINT THE COOKIE, HODL THE CRUMB \u{1F36A}",
-  "BASED AND BLUE-PILLED \u{1F535}",
-  "YOUR GAS IS LOW, BUT YOUR VIBE IS HIGH \u{2728}",
-  "EXIT LIQUIDITY? NO, JUST COOKIE LIQUIDITY \u{1F36C}",
-  "BORN ONCHAIN, RAISED BY DEGENS \u{1F476}",
-  "WAGMI: WE ARE ALL GONNA MINT COOKIES \u{1F95B}",
-  "JESSE POLLAK APPROVES THIS MESSAGE \u{1F535}",
-  "0.000001 ETH FOR A CRUMB? BULLISH \u{1F4C8}",
-  "STAY BASED, STAY CRUNCHY \u{1F6E1}\u{FE0F}",
-  "DEGEN LEVEL: MAXIMUM CRUNCH \u{1F479}",
-  "PAPER HANDS CRUMBLE, DIAMOND HANDS CLINK \u{1F48E}",
-  "ONCHAIN IS THE NEW ONLINE \u{1F310}",
-  "GO TO BASE, DON'T LOOK BACK \u{1F535}"
-];
+import { getChainId } from '@/lib/network';
+import { getExplorerTxUrl } from '@/lib/network';
+import { getTodayUtc, getTodayFortuneIndexInArray } from '@/lib/fortune';
+import { FORTUNE_DEFINITIONS } from '@/lib/fortune-definitions';
 
 const CTA_BASE_CLASS =
   "w-full min-h-14 sm:min-h-16 px-4 sm:px-6 py-3 rounded-xl border-4 font-black uppercase leading-tight whitespace-nowrap text-[clamp(0.75rem,3.9vw,1.5rem)] transition-all active:shadow-none active:translate-x-1 active:translate-y-1";
@@ -37,7 +23,6 @@ const CLAIM_BUTTON_CLASS = `${CTA_BASE_CLASS} bg-black text-white border-white h
 const SHARE_BUTTON_CLASS = `${CTA_BASE_CLASS} bg-white text-black border-black hover:bg-cyan-300 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]`;
 const CONNECT_BUTTON_CLASS =
   "!w-full !min-h-14 sm:!min-h-16 !px-4 sm:!px-6 !py-3 !rounded-xl !border-4 !border-black !bg-[#7c89ff] !text-white !font-black !uppercase !leading-tight !whitespace-nowrap !text-[clamp(0.75rem,3.9vw,1.5rem)] !shadow-[0_6px_0_0_#5a65c0] transition-all hover:!bg-[#6f7cf5] active:!shadow-none active:translate-x-1 active:translate-y-1";
-const CLAIM_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 type TxNotice = {
   phase: 'pending' | 'success' | 'error';
@@ -51,10 +36,27 @@ const TX_NOTICE_STYLE = {
   error: 'bg-[#ff8fa3] text-black border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]',
 } as const;
 
+function getTxErrorMessage(status: LifecycleStatus): string {
+  if (status.statusName !== 'error') return 'TRANSACTION FAILED';
+  const data = status.statusData as { message?: string; code?: string; errorCode?: number } | undefined;
+  const msg = data?.message ?? '';
+  const code = data?.code ?? data?.errorCode;
+  if (code === -32603 || msg.toLowerCase().includes('user rejected') || msg.toLowerCase().includes('rejected')) {
+    return 'YOU REJECTED THE TRANSACTION';
+  }
+  if (code === -32002 || msg.toLowerCase().includes('paymaster') || msg.toLowerCase().includes('allowlist')) {
+    return 'PAYMASTER LIMIT. TRY AGAIN LATER OR USE GAS';
+  }
+  if (msg) return `FAILED: ${msg.slice(0, 60).toUpperCase()}${msg.length > 60 ? '…' : ''}`;
+  return 'TRANSACTION FAILED. TRY AGAIN';
+}
+
 export default function Home() {
   const { address } = useAccount();
+  const [userFid, setUserFid] = useState<number | null>(null);
   const [isCracked, setIsCracked] = useState(false);
-  const [fortune, setFortune] = useState("");
+  const [fortune, setFortune] = useState('');
+  const [fortuneId, setFortuneId] = useState<string>('');
   const [txNotice, setTxNotice] = useState<TxNotice | null>(null);
   const [dismissedNoticeKey, setDismissedNoticeKey] = useState<string | null>(null);
   const [cooldownEndsAt, setCooldownEndsAt] = useState<number | null>(null);
@@ -90,23 +92,50 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!cooldownEndsAt) {
-      return;
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await sdk.quickAuth.fetch(`${typeof window !== 'undefined' ? window.location.origin : ''}/api/auth`);
+        if (cancelled) return;
+        const data = await res.json();
+        if (res.ok && typeof data.userFid === 'number') setUserFid(data.userFid);
+      } catch {
+        // not in miniapp or no JWT — leave userFid null, use random fortune
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
-    const timerId = window.setInterval(() => {
-      setNowMs(Date.now());
-    }, 1000);
+  useEffect(() => {
+    if (!address) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await sdk.quickAuth.fetch(
+          `${typeof window !== 'undefined' ? window.location.origin : ''}/api/fortune/status?address=${encodeURIComponent(address)}`
+        );
+        if (cancelled || !res.ok) return;
+        const data = await res.json();
+        const st = data?.status;
+        if (st?.nextClaimAvailableAt && st.isCooldownActive) {
+          const nextAt = new Date(st.nextClaimAvailableAt).getTime();
+          setCooldownEndsAt(nextAt);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [address]);
 
-    return () => {
-      window.clearInterval(timerId);
-    };
+  useEffect(() => {
+    if (!cooldownEndsAt) return;
+    const timerId = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timerId);
   }, [cooldownEndsAt]);
 
   useEffect(() => {
-    if (cooldownEndsAt && cooldownEndsAt <= nowMs) {
-      setCooldownEndsAt(null);
-    }
+    if (cooldownEndsAt && cooldownEndsAt <= nowMs) setCooldownEndsAt(null);
   }, [cooldownEndsAt, nowMs]);
 
   const playCrunch = () => {
@@ -118,7 +147,18 @@ export default function Home() {
     if (isCracked) return;
     playCrunch();
     setIsCracked(true);
-    setFortune(FORTUNES[Math.floor(Math.random() * FORTUNES.length)]);
+    const todayUtc = getTodayUtc();
+    if (userFid !== null) {
+      const idx = getTodayFortuneIndexInArray(userFid, todayUtc, FORTUNE_DEFINITIONS.length);
+      const def = FORTUNE_DEFINITIONS[idx];
+      setFortune(def.text);
+      setFortuneId(def.id);
+    } else {
+      const idx = Math.floor(Math.random() * FORTUNE_DEFINITIONS.length);
+      const def = FORTUNE_DEFINITIONS[idx];
+      setFortune(def.text);
+      setFortuneId(def.id);
+    }
   };
 
   const handleShare = () => {
@@ -147,7 +187,7 @@ export default function Home() {
     });
   };
 
-  const handleTxStatus = (status: LifecycleStatus) => {
+  const handleTxStatus = useCallback((status: LifecycleStatus) => {
     if (
       status.statusName === 'buildingTransaction' ||
       status.statusName === 'transactionPending' ||
@@ -158,22 +198,45 @@ export default function Home() {
     }
 
     if (status.statusName === 'success') {
-      const txHash = status.statusData.transactionReceipts[0]?.transactionHash;
-      setCooldownEndsAt(Date.now() + CLAIM_COOLDOWN_MS);
-      openNotice({
-        phase: 'success',
-        message: 'TRANSACTION SUCCESSFUL',
-        txHash,
-      });
+      const txHash = (status.statusData?.transactionReceipts?.[0]?.transactionHash as string | undefined);
+      (async () => {
+        if (!address || !fortuneId) {
+          setCooldownEndsAt(Date.now() + 24 * 60 * 60 * 1000);
+          openNotice({ phase: 'success', message: 'TRANSACTION SUCCESSFUL', txHash });
+          return;
+        }
+        try {
+          const res = await sdk.quickAuth.fetch(
+            `${typeof window !== 'undefined' ? window.location.origin : ''}/api/fortune/claim`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ address, fortuneId, txHash }),
+            }
+          );
+          const data = await res.json();
+          if (res.ok && data?.updatedStatus?.nextClaimAvailableAt) {
+            const nextAt = new Date(data.updatedStatus.nextClaimAvailableAt).getTime();
+            setCooldownEndsAt(nextAt);
+          } else {
+            setCooldownEndsAt(Date.now() + 24 * 60 * 60 * 1000);
+          }
+          openNotice({ phase: 'success', message: 'TRANSACTION SUCCESSFUL', txHash });
+        } catch {
+          setCooldownEndsAt(Date.now() + 24 * 60 * 60 * 1000);
+          openNotice({
+            phase: 'error',
+            message: 'CLAIM REGISTER FAILED. TRY AGAIN LATER.',
+          });
+        }
+      })();
       return;
     }
 
     if (status.statusName === 'error') {
       openNotice({
         phase: 'error',
-        message: status.statusData?.message
-          ? `TRANSACTION FAILED: ${status.statusData.message.toUpperCase()}`
-          : 'TRANSACTION FAILED',
+        message: getTxErrorMessage(status),
       });
       return;
     }
@@ -183,7 +246,8 @@ export default function Home() {
       setDismissedNoticeKey(null);
       return;
     }
-  };
+  }, [address, fortuneId]);
+
 
   const closeTxNotice = () => {
     if (!txNotice) {
@@ -194,7 +258,7 @@ export default function Home() {
     setTxNotice(null);
   };
 
-  const txExplorerUrl = txNotice?.txHash ? `https://sepolia.basescan.org/tx/${txNotice.txHash}` : null;
+  const txExplorerUrl = txNotice?.txHash ? getExplorerTxUrl(txNotice.txHash) : null;
   const remainingCooldownMs = cooldownEndsAt ? Math.max(cooldownEndsAt - nowMs, 0) : 0;
   const isCooldownActive = remainingCooldownMs > 0;
 
@@ -275,7 +339,7 @@ export default function Home() {
               </div>
             ) : (
               <Transaction
-                chainId={84532}
+                chainId={getChainId()}
                 calls={calls}
                 isSponsored={hasPaymaster}
                 capabilities={capabilities}
